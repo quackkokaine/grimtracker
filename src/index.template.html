@@ -106,7 +106,11 @@ input[type=checkbox]{accent-color:var(--blood)}
 .syncmain{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
 .syncinfo{flex:1 1 420px;min-width:0}
 .syncinfo .note{margin:2px 0}
-.syncbtns{display:flex;flex-wrap:wrap;gap:8px}
+.syncbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.syncbtns .stack{display:flex;flex-direction:column;gap:6px}
+.steamtip{margin-top:8px;background:#0d0b0a;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--text)}
+.steamtip ol{margin:6px 0 0;padding-left:20px}.steamtip li{margin:3px 0}
+.steamtip code{font-size:12.5px}
 .syncdbg table td:first-child{width:180px}
 .sync code{font-size:12px;background:#0d0b0a;padding:1px 4px;border-radius:3px;color:var(--bone)}
 .syncdbg summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px}
@@ -265,10 +269,22 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <div class="syncinfo">
         <h3>Game sync <span class="dot" id="syncDot"></span></h3>
         <p class="note" id="syncStatus">Not connected. Connect your Grim Dawn save folder to track hardcore characters automatically.</p>
-        <p class="note">Pick <code>Documents\My Games\Grim Dawn\save</code> (or the <code>main</code> folder inside it). Files are only read, never changed or uploaded.</p>
+        <p class="note">Pick <code>Documents\My Games\Grim Dawn\save</code>, or with Steam Cloud on, <code>Steam\userdata\&lt;your id&gt;\219990\remote\save</code>. Files are only read, never changed or uploaded.</p>
+        <div class="steamtip" id="steamTip" hidden>
+          <b>Steam Cloud saves</b>: the path is copied. In the folder window:
+          <ol>
+            <li>Click the address bar at the top, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
+            <li>Open the numbered folder (your Steam ID), then <b>219990</b> → <b>remote</b>.</li>
+            <li>Select the <b>save</b> folder and click <b>Select Folder</b>.</li>
+          </ol>
+          <span class="note">Path: <code id="steamPath"></code></span>
+        </div>
       </div>
       <div class="syncbtns">
-        <button class="btn red" id="syncConnect">Connect save folder</button>
+        <div class="stack" id="syncConnectWrap">
+          <button class="btn red" id="syncConnect">Connect save folder</button>
+          <button class="btn sm ghost" id="syncSteam" title="Copies the Steam save path and opens the folder picker">Saves in Steam Cloud?</button>
+        </div>
         <button class="btn" id="syncReconnect" hidden>Reconnect</button>
         <button class="btn ghost" id="syncStop" hidden>Disconnect</button>
         <label class="btn ghost" id="syncOnceLbl" title="Reads the folder once. Use this if live sync isn't supported in your browser.">Load once<input type="file" id="syncOnce" webkitdirectory multiple hidden></label>
@@ -860,7 +876,7 @@ const Sync=(()=>{
 
   function status(text,state){$("#syncStatus").textContent=text;$("#syncDot").className="dot"+(state?" "+state:"")}
   function buttons(mode){ // mode: off | live | reconnect
-    $("#syncConnect").hidden=mode!=="off"||!canLive;
+    $("#syncConnectWrap").hidden=mode!=="off"||!canLive;
     $("#syncReconnect").hidden=mode!=="reconnect";
     $("#syncStop").hidden=mode==="off";
   }
@@ -882,6 +898,8 @@ const Sync=(()=>{
         found.forEach(f=>{const k=f.folder+"/"+f.name;if(!files.has(k))files.set(k,{h:f.h,folder:f.folder,mod:0})});
         [...files.keys()].forEach(k=>{if(!keys.has(k))files.delete(k)});
       }
+      if(!files.size){busy=false;stop(false);status("No character files in that folder. Pick the save folder, or if you use Steam Cloud, click “Saves in Steam Cloud?”.","warn");return}
+      $("#steamTip").hidden=true;
       let changed=0;
       for(const f of files.values()){
         let file;try{file=await f.h.getFile()}catch(e){continue}
@@ -889,7 +907,7 @@ const Sync=(()=>{
         if(await ingest(f.folder,await file.arrayBuffer(),file.lastModified)){f.mod=file.lastModified;changed++}
       }
       const n=[...report.values()].filter(r=>r.hc).length;
-      status(files.size?`Live · watching ${files.size} save file${files.size>1?"s":""} (${n} hardcore) · checked ${new Date().toLocaleTimeString()}`:"Connected, but no character files found in that folder. Pick the save or main folder.",files.size?"live":"warn");
+      status(files.size?`Live · watching ${files.size} save file${files.size>1?"s":""} (${n} hardcore) · checked ${new Date().toLocaleTimeString()}`:"No character files in that folder. Pick the save folder, or if you use Steam Cloud, click “Saves in Steam Cloud?”.",files.size?"live":"warn");
       if(changed)render();
       renderDetails();
     }catch(e){
@@ -970,6 +988,12 @@ const Sync=(()=>{
 })();
 
 $("#syncConnect").onclick=()=>Sync.connect();
+const STEAM_PATH="C:\\Program Files (x86)\\Steam\\userdata";
+$("#syncSteam").onclick=async()=>{
+  $("#steamPath").textContent=STEAM_PATH;$("#steamTip").hidden=false;
+  try{await navigator.clipboard.writeText(STEAM_PATH)}catch(e){}
+  Sync.connect(); // browsers can't open the picker at a custom path, so the path is pasted into it
+};
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
 $("#syncOnce").onchange=e=>{Sync.loadOnce(e.target.files);e.target.value=""};
