@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grim Dawn Hardcore Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0d0c; --panel:#181412; --panel2:#201a17; --line:#3a2e27; --line2:#2a221d;
+  --text:#e6dccb; --muted:#9a8b78; --dim:#6d6053;
+  --blood:#b3261e; --blood2:#7d1813; --ember:#e0893a; --bone:#d8c9a8; --ok:#7fa35a;
+  --aom:#5f9e8f; --fg:#c9a23e; --foa:#7aa6d6;
+  --r:8px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 "Alegreya Sans",system-ui,sans-serif}
+body{background:radial-gradient(1200px 500px at 50% -200px,#2a1410 0%,transparent 70%),var(--bg);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--ember)}
+h1,h2,h3{font-family:Cinzel,serif;font-weight:700;letter-spacing:.04em;margin:0}
+
+/* header */
+header{border-bottom:1px solid var(--line);background:linear-gradient(#1a1311,#120e0d)}
+.hwrap{max-width:1400px;margin:0 auto;padding:16px 20px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{flex:none}
+.brand h1{font-size:22px;color:var(--bone)}
+.brand small{display:block;font-family:"Alegreya Sans";letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--blood);font-weight:700}
+.charbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,.btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+select:focus,.btn:focus-visible,input:focus{outline:2px solid var(--ember);outline-offset:1px}
+a.btn{color:var(--text);text-decoration:none;display:inline-block}
+.btn:hover{border-color:#5a4638;background:#2a211c}
+.btn.red{background:var(--blood2);border-color:var(--blood)}
+.btn.red:hover{background:var(--blood)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:4px 9px;font-size:14px}
+
+main{max-width:1400px;margin:0 auto;padding:18px 20px 60px}
+
+/* summary */
+.summary{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);padding:14px 16px}
+.stat .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat .val{font-family:Cinzel,serif;font-size:28px;color:var(--bone);line-height:1.1;margin-top:4px}
+.stat .val span{font-size:16px;color:var(--muted)}
+.bar{height:6px;background:#2b231e;border-radius:3px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blood2),var(--blood));border-radius:3px;transition:width .3s}
+.bar.gold i{background:linear-gradient(90deg,#8a5a1e,var(--ember))}
+.charcard{display:flex;gap:14px;align-items:center}
+.charcard .sig{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#2a1512;border:2px solid var(--blood);font-family:Cinzel;font-size:20px;color:var(--bone);flex:none}
+.charcard.dead .sig{border-color:#555;background:#1c1c1c;color:#888}
+.charcard .nm{font-family:Cinzel;font-size:18px;color:var(--bone)}
+.charcard .meta{color:var(--muted);font-size:14px}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid}
+.badge.alive{color:var(--ok);border-color:#4a6234}
+.badge.dead{color:#ccc;border-color:#666;background:#2a2a2a}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tabs{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.tabs button{background:var(--panel);border:0;padding:8px 16px;cursor:pointer;font-family:Cinzel;font-weight:700;letter-spacing:.05em;color:var(--muted);border-right:1px solid var(--line)}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected=true]{background:var(--blood2);color:#fff}
+.tabs button .ct{font-family:"Alegreya Sans";font-weight:500;font-size:13px;opacity:.85;margin-left:6px}
+.filters{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;color:var(--muted);font-size:14px}
+.filters label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.filters input[type=search]{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;width:180px}
+input[type=checkbox]{accent-color:var(--blood)}
+
+/* layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;align-items:start}
+.list{display:flex;flex-direction:column;gap:12px}
+.act{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.act>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:11px 16px;background:linear-gradient(90deg,#221a16,#181412)}
+.act>summary::-webkit-details-marker{display:none}
+.act>summary h2{font-size:16px;color:var(--bone);flex:1}
+.act>summary .ct{font-size:14px;color:var(--muted)}
+.act>summary .mini{width:80px;height:4px;background:#2b231e;border-radius:2px;overflow:hidden}
+.act>summary .mini i{display:block;height:100%;background:var(--blood)}
+.act>summary .chev{transition:transform .2s;color:var(--dim)}
+.act[open]>summary .chev{transform:rotate(90deg)}
+.act.complete>summary h2::after{content:" ✓";color:var(--ok)}
+
+.row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px 9px 12px;border-top:1px solid var(--line2);cursor:pointer}
+.row:hover{background:#1f1916}
+.row.sel{background:#2a1714;box-shadow:inset 3px 0 0 var(--blood)}
+.row.done .nm{color:var(--muted);text-decoration:line-through;text-decoration-color:#5a4a3e}
+.row .chk{width:26px;height:26px;border-radius:50%;border:2px solid #5a4638;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.row .chk svg{opacity:0}
+.row.done .chk{background:var(--blood);border-color:var(--blood)}
+.row.done .chk svg{opacity:1}
+.row .nm{font-weight:700;color:var(--text)}
+.row .zone{color:var(--muted);font-size:14px}
+.tag.found{color:var(--bone);border-color:#5a4a3e}
+.tag.sync{color:var(--ok);border-color:#4a6234}
+.sync h3{font-size:15px;color:var(--bone);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.sync .dot{width:9px;height:9px;border-radius:50%;background:#555;display:inline-block}
+.sync .dot.live{background:var(--ok);box-shadow:0 0 0 3px rgba(127,163,90,.2)}
+.sync .dot.warn{background:var(--ember)}
+.sync{margin-bottom:16px}
+.syncmain{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.syncinfo{flex:1 1 420px;min-width:0}
+.syncinfo .note{margin:2px 0}
+.syncbtns{display:flex;flex-wrap:wrap;gap:8px}
+.syncdbg table td:first-child{width:180px}
+.sync code{font-size:12px;background:#0d0b0a;padding:1px 4px;border-radius:3px;color:var(--bone)}
+.syncdbg summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px}
+.syncdbg table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.syncdbg td{padding:3px 4px;border-top:1px solid var(--line2);vertical-align:top}
+.row .req{font-size:14px;color:var(--bone);margin-top:2px}
+.row .req .fight{color:var(--ember);font-weight:700}
+.tags{display:flex;gap:6px;align-items:center}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:2px 6px;border-radius:3px;border:1px solid;white-space:nowrap}
+.tag.aom{color:var(--aom);border-color:#2f5249}
+.tag.fg{color:var(--fg);border-color:#5c4b1f}
+.tag.foa{color:var(--foa);border-color:#2f4a69}
+.tag.only{color:#e9a0a0;border-color:#6b2a26}
+.tag.secret{color:#c7a0e9;border-color:#4c3366}
+.pin{background:none;border:1px solid var(--line);border-radius:5px;color:var(--muted);padding:3px 7px;cursor:pointer;font-size:13px}
+.pin:hover{color:var(--ember);border-color:#6a4a2c}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* side */
+.side{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px}
+.mapcard{padding:0;overflow:hidden}
+.mapcard .mh{padding:12px 16px;border-bottom:1px solid var(--line2)}
+.mapcard .mh h3{font-size:17px;color:var(--bone)}
+.mapcard .mh .sub{color:var(--muted);font-size:14px}
+.mapcard .mh .reqs{margin-top:8px;font-size:14px}
+.mapwrap{position:relative;aspect-ratio:1/1;background:#0b0a09 repeating-linear-gradient(45deg,#121010 0 10px,#0d0b0a 10px 20px)}
+.mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.mapwrap .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
+.mapfoot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 16px;font-size:13px;color:var(--dim);border-top:1px solid var(--line2)}
+.shop h3{font-size:15px;color:var(--bone);margin-bottom:8px}
+.shop ul{margin:0;padding:0;list-style:none}
+.shop li{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line2);font-size:15px}
+.shop li span:last-child{color:var(--muted)}
+#hallLink .hc{opacity:.85;font-size:14px}
+.hallhead{text-align:center;padding:18px 0 22px}
+.hallhead h2{font-size:34px;color:var(--bone);letter-spacing:.08em}
+.hallhead h2::before,.hallhead h2::after{content:"†";color:var(--blood);margin:0 16px;font-size:26px;vertical-align:middle}
+.hallhead p{color:var(--muted);margin:8px 0 0}
+.graves{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.grave{display:flex;flex-direction:column;background:linear-gradient(#1b1716,#141110);border:1px solid #3a302a;border-radius:70px 70px 8px 8px;padding:26px 22px 18px;text-align:center;position:relative}
+.grave .cross{font-family:Cinzel;color:var(--blood);font-size:26px;line-height:1}
+.grave .gn{font-family:Cinzel;font-size:22px;color:var(--bone);margin-top:6px;word-break:break-word}
+.grave .gl{color:var(--muted);font-size:14px;margin-top:2px}
+.grave .gd{color:var(--dim);font-size:13px;margin-top:6px}
+.grave .gs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px;padding:10px 0;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.grave .gs b{display:block;font-family:Cinzel;font-size:18px;color:var(--bone);font-weight:500}
+.grave .gs span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.grave .ep{font-style:italic;color:#bba98f;min-height:22px;font-size:15px}
+.grave .ep.empty{color:var(--dim)}
+.grave .ep input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:5px 8px;font-style:normal;text-align:center}
+.grave .trash{position:absolute;top:14px;right:16px;background:none;border:0;color:var(--muted);opacity:.28;cursor:pointer;padding:6px;border-radius:6px;line-height:0;transition:opacity .15s,color .15s}
+.grave:hover .trash{opacity:.55}
+.grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#e05a4f}
+.grave .tag.example{position:absolute;top:18px;left:18px;color:var(--muted);border-color:#4a3e35}
+.dlg.wide{max-width:560px}
+.gamerow{border-top:1px solid var(--line2);margin-top:12px;padding-top:12px}
+.sync h3 .opt{font-family:"Alegreya Sans";font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.doll{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+@media (max-width:640px){.doll{grid-template-columns:1fr}}
+.gcol{display:flex;flex-direction:column;gap:8px}
+.gslot{background:var(--panel2);border:1px solid var(--line2);border-left:3px solid #3a302a;border-radius:7px;padding:8px 12px;min-height:58px}
+.gslot .sl{font-family:Cinzel;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);margin-bottom:2px}
+.gslot .sl .rar{font-family:"Alegreya Sans";font-size:12px;font-weight:500;letter-spacing:.08em;color:var(--muted)}
+.gslot .nm{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.gslot .wiki{font-size:12.5px;white-space:nowrap;color:var(--muted)}
+.gslot .wiki:hover{color:var(--ember)}
+.gslot .st{margin-top:6px;border-top:1px solid var(--line2);padding-top:6px}
+.gslot .st h5{margin:6px 0 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.gslot .st h5:first-child{margin-top:0}
+.gslot .st ul{margin:0;padding:0;list-style:none;font-size:13.5px;line-height:1.45;color:#cfc4b0}
+.gslot .in{font-weight:700;font-size:15.5px;line-height:1.3}
+.gslot .im{font-size:13px;color:var(--muted)}
+.gslot.none .in{color:var(--dim);font-weight:400;font-style:italic}
+.r-common .in{color:#e6e6e6}.r-magical .in{color:#f0d74d}.r-rare .in{color:#5fd46a}.r-epic .in{color:#4fa3ff}.r-legendary .in{color:#c27cff}
+.r-magical{border-left-color:#8a7a2a}.r-rare{border-left-color:#2f7a37}.r-epic{border-left-color:#2a5f99}.r-legendary{border-left-color:#7a3fb0}
+.weps{margin-top:12px}.weps.first{margin-top:0;margin-bottom:6px}
+.armh{font-family:Cinzel;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--blood);margin:6px 0 8px}.weps h4{font-family:Cinzel;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--blood);margin:0 0 8px}
+.weps .doll{margin-bottom:8px}
+.dlg.stats{max-width:820px;max-height:calc(100vh - 40px);overflow:auto;padding:20px 24px}
+.statshead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
+.statshead h3{margin:0;font-size:24px}
+.sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.sgrid{grid-template-columns:1fr}}
+.sbox{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:12px 14px}
+.sbox h4{font-family:Cinzel;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--blood);margin:0 0 8px}
+.sbox dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14.5px}
+.sbox dt{color:var(--muted);min-width:0}.sbox dd{margin:0;color:var(--bone);text-align:right;font-variant-numeric:tabular-nums}
+.attrs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.attrs div{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:10px;text-align:center}
+.attrs b{display:block;font-family:Cinzel;font-size:24px;color:var(--bone);font-weight:500}
+.attrs span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rtable{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+.rtable th{color:var(--muted);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.rtable td{padding:6px;border-bottom:1px solid var(--line2);color:var(--bone)}
+.mast{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}.mast span{border:1px solid var(--line);border-radius:4px;padding:1px 7px;font-size:13px;color:var(--bone)}
+.steps{margin:0 0 12px;padding-left:20px;color:var(--text)}
+.steps li{margin:8px 0;line-height:1.5}
+.pathrow{display:flex;gap:8px;align-items:center;margin:6px 0 2px}
+.pathrow code{flex:1;min-width:0;overflow-wrap:anywhere;background:#0d0b0a;border:1px solid var(--line2);border-radius:5px;padding:6px 8px;font-size:12.5px;color:var(--bone)}
+.grave .gact{flex-wrap:wrap;display:flex;justify-content:center;gap:8px;margin-top:auto;padding-top:12px}
+.graves .empty{grid-column:1/-1}
+.note{font-size:13px;color:var(--dim)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal.open{display:flex}
+.dlg{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:460px;width:100%;padding:20px 22px}
+.dlg h3{font-size:19px;color:var(--bone);margin-bottom:12px}
+.dlg label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;letter-spacing:.05em}
+.dlg input,.dlg select,.dlg textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.dlg textarea{min-height:140px;font-family:ui-monospace,monospace;font-size:12px}
+.dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.dlg p{color:var(--muted);margin:0 0 6px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:9px 16px;border-radius:6px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1}
+
+.locked{border:1px solid #444;background:#1a1a1a;color:#aaa;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:15px}
+
+footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-size:13px}
+
+@media (max-width:1080px){
+  .layout{grid-template-columns:1fr}
+  .side{position:static}
+  .summary{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  .summary{grid-template-columns:1fr}
+  .row{grid-template-columns:30px minmax(0,1fr)}
+  .row .tags{grid-column:2;justify-content:flex-start;flex-wrap:wrap}
+  .filters input[type=search]{width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="#b3261e" stroke-width="2"/><path d="M20 6 L23 17 L34 20 L23 23 L20 34 L17 23 L6 20 L17 17 Z" fill="#d8c9a8"/><circle cx="20" cy="20" r="3" fill="#b3261e"/></svg>
+      <div><small>Hardcore</small><h1>Grim Dawn Devotion Tracker</h1></div>
+    </div>
+    <a class="btn red" id="backLink" href="#" hidden>← Back to tracker</a>
+    <div class="charbar" id="charbar">
+      <select id="charSel" aria-label="Character"></select>
+      <button class="btn" id="newChar">+ New character</button>
+      <button class="btn ghost" id="editChar">Edit</button>
+      <a class="btn red" id="hallLink" href="#fallen">† Hall of the Fallen <span class="hc" id="hallCount"></span></a>
+      <button class="btn ghost" id="backupBtn">Backup</button>
+    </div>
+  </div>
+</header>
+
+<main id="trackerView">
+  <section class="card sync" id="syncCard">
+    <div class="syncmain">
+      <div class="syncinfo">
+        <h3>Game sync <span class="dot" id="syncDot"></span></h3>
+        <p class="note" id="syncStatus">Not connected. Connect your Grim Dawn save folder to track hardcore characters automatically.</p>
+        <p class="note">Pick <code>Documents\My Games\Grim Dawn\save</code> (or the <code>main</code> folder inside it). Files are only read, never changed or uploaded.</p>
+      </div>
+      <div class="syncbtns">
+        <button class="btn red" id="syncConnect">Connect save folder</button>
+        <button class="btn" id="syncReconnect" hidden>Reconnect</button>
+        <button class="btn ghost" id="syncStop" hidden>Disconnect</button>
+        <label class="btn ghost" id="syncOnceLbl" title="Reads the folder once. Use this if live sync isn't supported in your browser.">Load once<input type="file" id="syncOnce" webkitdirectory multiple hidden></label>
+      </div>
+    </div>
+    <div class="syncmain gamerow">
+      <div class="syncinfo">
+        <h3>Game files <span class="dot" id="gameDot"></span> <span class="opt">optional</span></h3>
+        <p class="note" id="gameStatus">Connect your Grim Dawn install folder (the one with <code>Grim Dawn.exe</code>) to see the names of each character's gear.</p>
+      </div>
+      <div class="syncbtns">
+        <button class="btn" id="gameConnect">Connect game folder</button>
+        <button class="btn" id="gameReconnect" hidden>Reconnect</button>
+        <button class="btn ghost" id="gameStop" hidden>Disconnect</button>
+      </div>
+    </div>
+    <details class="syncdbg"><summary>Sync details</summary>
+      <div id="syncDetails" class="note">Nothing read yet.</div>
+      <label class="note" style="display:flex;gap:6px;align-items:center;margin-top:8px">Shrine list layout
+        <select id="syncLayout"><option value="">Auto-detect</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
+      </label>
+    </details>
+  </section>
+  <section class="summary">
+    <div class="card charcard" id="charCard"></div>
+    <div class="card stat">
+      <div class="label">Devotion points from shrines</div>
+      <div class="val" id="dpVal">0<span> / 55</span></div>
+      <div class="bar gold"><i id="dpBar"></i></div>
+    </div>
+    <div class="card stat">
+      <div class="label" id="diffLabel">Normal shrines</div>
+      <div class="val" id="diffVal">0<span> / 0</span></div>
+      <div class="bar"><i id="diffBar"></i></div>
+    </div>
+    <div class="card stat">
+      <div class="label">All difficulties</div>
+      <div class="val" id="allVal">0<span> / 0</span></div>
+      <div class="bar"><i id="allBar"></i></div>
+    </div>
+  </section>
+
+  <div id="lockedNote"></div>
+
+  <div class="toolbar">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="filters">
+      <input type="search" id="search" placeholder="Search zone, shrine, item…" aria-label="Search shrines">
+      <label><input type="checkbox" id="hideDone"> Hide restored</label>
+      <label><input type="checkbox" id="fightOnly"> Combat shrines only</label>
+      <label title="Show Ultimate-only secret shrines"><input type="checkbox" id="spoilers"> Show secret areas</label>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="list" id="list"></div>
+
+    <aside class="side">
+      <div class="card mapcard">
+        <div class="mh" id="mapHead"><h3>Select a shrine</h3><div class="sub">Click any shrine in the list to see where it is.</div></div>
+        <div class="mapwrap" id="mapWrap">
+          <div class="ph">The Grimtools world map will open here, centered on the shrine you pick.</div>
+        </div>
+        <div class="mapfoot"><span>Map: <a href="https://www.grimtools.com/map/" target="_blank" rel="noopener">Grimtools World Map</a></span><a id="mapOpen" href="https://www.grimtools.com/map/" target="_blank" rel="noopener">Open full map ↗</a></div>
+      </div>
+
+      <div class="card shop">
+        <h3 id="shopTitle">Items still needed</h3>
+        <ul id="shopList"></ul>
+        <p class="note" style="margin-top:8px">Numbers are how many shrines still want that item. The shrine itself shows the exact amount.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px;color:var(--bone);margin-bottom:8px">Expansions you own</h3>
+        <div class="filters" style="gap:6px 16px">
+          <label><input type="checkbox" data-exp="AoM"> Ashes of Malmouth</label>
+          <label><input type="checkbox" data-exp="FG"> Forgotten Gods</label>
+          <label><input type="checkbox" data-exp="FoA"> Fangs of Asterkarn</label>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="note" style="font-size:14px;color:var(--muted)">Bonus points from other sources:</span>
+          <button class="btn sm" id="bonusMinus" aria-label="Remove bonus point">−</button>
+          <b id="bonusVal">0</b>
+          <button class="btn sm" id="bonusPlus" aria-label="Add bonus point">+</button>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</main>
+
+<main id="fallenView" hidden>
+  <section class="hallhead">
+    <h2>Hall of the Fallen</h2>
+    <p>Hardcore characters who have died. They're added here automatically when game sync sees a death.</p>
+  </section>
+  <section class="summary" id="hallStats"></section>
+  <div class="toolbar">
+    <div class="filters"><label>Sort by
+      <select id="hallSort"><option value="recent">Most recent</option><option value="level">Highest level</option><option value="shrines">Most shrines</option></select></label></div>
+  </div>
+  <div class="graves" id="graves"></div>
+</main>
+
+<footer>
+  Shrine list and requirements from the <a href="https://www.grimtools.com/checklist/shrines/normal" target="_blank" rel="noopener">Grimtools checklist</a> (game version 1.3.1.2). Progress is saved in this browser only, so use Backup to keep a copy. Fan-made, not affiliated with Crate Entertainment.
+</footer>
+
+<!-- dialogs -->
+<div class="modal" id="charModal" role="dialog" aria-modal="true" aria-labelledby="charModalT">
+  <form class="dlg" id="charForm">
+    <h3 id="charModalT">New hardcore character</h3>
+    <label for="fName">Name</label><input id="fName" required maxlength="40">
+    <label for="fClass">Class / masteries</label><input id="fClass" maxlength="60" placeholder="e.g. Warlord (Soldier + Oathkeeper)">
+    <label for="fLevel">Level</label><input id="fLevel" type="number" min="1" max="100" value="1">
+    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn red" type="submit">Save</button></div>
+  </form>
+</div>
+
+<div class="modal" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsT">
+  <div class="dlg stats">
+    <div class="statshead"><div><h3 id="statsT"></h3><div class="note" id="statsSub"></div></div><button type="button" class="btn ghost sm" data-close aria-label="Close">✕</button></div>
+    <div id="statsBody"></div>
+    <p class="note" id="statsFoot"></p>
+  </div>
+</div>
+
+<div class="modal" id="gearModal" role="dialog" aria-modal="true" aria-labelledby="gearT">
+  <div class="dlg stats">
+    <div class="statshead"><div><h3 id="gearT"></h3><div class="note" id="gearSub"></div></div><button type="button" class="btn ghost sm" data-close aria-label="Close">✕</button></div>
+    <div id="gearBody"></div>
+    <p class="note" id="gearFoot"></p>
+  </div>
+</div>
+
+<div class="modal" id="buildModal" role="dialog" aria-modal="true" aria-labelledby="buildT">
+  <form class="dlg wide" id="buildForm">
+    <h3 id="buildT">Build on Grimtools</h3>
+    <ol class="steps">
+      <li><a href="https://www.grimtools.com/calc/" target="_blank" rel="noopener">Open the Grimtools build calculator ↗</a></li>
+      <li>Click <b>Import</b> on the left side of the calculator, then click the file button and choose this character's save:
+        <div class="pathrow"><code id="buildPath"></code><button type="button" class="btn sm" id="buildCopy">Copy</button></div>
+        <span class="note" id="buildWhere"></span></li>
+      <li>Once the build loads, save or share it in Grimtools and paste the link here:</li>
+    </ol>
+    <input id="buildUrl" type="url" placeholder="https://www.grimtools.com/calc/…" aria-label="Grimtools build link">
+    <p class="note" id="buildErr" style="color:var(--ember);min-height:18px;margin-top:6px"></p>
+    <div class="acts"><button type="button" class="btn ghost" id="buildClear" hidden>Remove link</button><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn red" type="submit">Save link</button></div>
+  </form>
+</div>
+
+<div class="modal" id="delModal" role="dialog" aria-modal="true" aria-labelledby="delT">
+  <div class="dlg">
+    <h3 id="delT">Remove from the Hall?</h3>
+    <p id="delText"></p>
+    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="delConfirm">Remove</button></div>
+  </div>
+</div>
+
+<div class="modal" id="backupModal" role="dialog" aria-modal="true" aria-labelledby="bkT">
+  <div class="dlg">
+    <h3 id="bkT">Backup &amp; restore</h3>
+    <p>Copy this text somewhere safe. To restore, paste a backup in and press Restore.</p>
+    <textarea id="bkText" spellcheck="false"></textarea>
+    <div class="acts">
+      <button type="button" class="btn ghost" data-close>Close</button>
+      <button type="button" class="btn" id="bkCopy">Copy</button>
+      <button type="button" class="btn red" id="bkRestore">Restore</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>/* ===== Grim Dawn save reader (player.gdc) =====
+   Reads only what the tracker needs: header (name, class tag, level, hardcore),
+   block 1 (difficulty / mod flag), block 2 (level, devotion), block 16 (deaths),
+   block 17 (shrine lists). Every other block is skipped, so new blocks added in
+   later game versions don't break the reader. */
+const GDSave = (() => {
+  const MAGIC = 0x58434447; // "GDCX"
+
+  function Reader(buf) {
+    const dv = new DataView(buf);
+    const len = buf.byteLength;
+    let pos = 0, key = 0;
+    const table = new Uint32Array(256);
+
+    function need(n) { if (pos + n > len) throw new Error("unexpected end of file at " + pos); }
+    function upd(b) { key = (key ^ table[b]) >>> 0; }
+
+    return {
+      get pos() { return pos; }, len,
+      snap() { return [pos, key]; },
+      restore(s) { pos = s[0]; key = s[1]; },
+      float() { const i = this.int(); const f = new DataView(new ArrayBuffer(4)); f.setUint32(0, i, true); return f.getFloat32(0, true); },
+      init() {
+        need(4);
+        let k = (dv.getUint32(0, true) ^ 0x55555555) >>> 0; pos = 4;
+        key = k;
+        for (let i = 0; i < 256; i++) {
+          k = ((k >>> 1) | (k << 31)) >>> 0;
+          k = Math.imul(k, 39916801) >>> 0;
+          table[i] = k;
+        }
+      },
+      int() {
+        need(4);
+        const raw = dv.getUint32(pos, true);
+        const ret = (raw ^ key) >>> 0;
+        for (let i = 0; i < 4; i++) upd(dv.getUint8(pos + i));
+        pos += 4; return ret;
+      },
+      byte() {
+        need(1);
+        const raw = dv.getUint8(pos);
+        const ret = (raw ^ key) & 255;
+        upd(raw); pos += 1; return ret;
+      },
+      next() { need(4); const r = (dv.getUint32(pos, true) ^ key) >>> 0; pos += 4; return r; },
+      skipTo(end) { if (end > len) throw new Error("block runs past end of file"); while (pos < end) { upd(dv.getUint8(pos)); pos++; } },
+      str() { const n = this.int(); if (n > 4096) throw new Error("bad string length " + n); let s = ""; for (let i = 0; i < n; i++) s += String.fromCharCode(this.byte()); return s; },
+      wstr() { const n = this.int(); if (n > 4096) throw new Error("bad name length " + n); let s = ""; for (let i = 0; i < n; i++) { const lo = this.byte(), hi = this.byte(); s += String.fromCharCode(lo | (hi << 8)); } return s; },
+      uid() { const b = new Uint8Array(16); for (let i = 0; i < 16; i++) b[i] = this.byte(); return b; },
+    };
+  }
+
+  const guard = (r, end) => { if (r.pos > end) throw new Error("overran block"); };
+  function readBlock(r, id, end, out) {
+    if (id === 1) {
+      const v = r.int();
+      out.info = { version: v, isInMainQuest: r.byte(), hasBeenInGame: r.byte(), lastDifficulty: r.byte(), greatestDifficulty: r.byte() };
+      out.info.iron = r.int(); out.info.greatestCrucible = r.byte(); out.info.tributes = r.int();
+    } else if (id === 2) {
+      const v = r.int();
+      out.bio = { version: v, level: r.int(), experience: r.int(), attributePoints: r.int(), skillPoints: r.int(), devotionPoints: r.int(), totalDevotion: r.int(),
+        physique: r.float(), cunning: r.float(), spirit: r.float(), health: r.float(), energy: r.float() };
+    } else if (id === 3) {
+      const v = r.int(); const has = r.byte();
+      if (!has) return;
+      const sacks = r.int(); r.int(); r.int();
+      if (sacks > 100) throw new Error("bad sack count");
+      for (let i = 0; i < sacks; i++) { r.int(); const len = r.next(); r.skipTo(r.pos + len); r.next(); } // bags: not needed
+      const item = () => {
+        const it = { base: r.str(), prefix: r.str(), suffix: r.str(), modifier: r.str(), transmute: r.str() };
+        it.seed = r.int(); it.relic = r.str(); it.relicBonus = r.str(); r.int(); it.augment = r.str(); r.int(); r.int(); it.relicLevel = r.int(); it.stack = r.int();
+        it.attached = r.byte(); return it;
+      };
+      const useAlt = r.byte(); const equipment = [];
+      for (let i = 0; i < 12; i++) { guard(r, end); equipment.push(item()); }
+      const sets = [];
+      for (let s = 0; s < 2; s++) { r.byte(); sets.push([item(), item()]); }
+      out.gear = { version: v, useAlt: !!useAlt, equipment, weapons: sets };
+    } else if (id === 8) {
+      const v = r.int(); const n = r.int(); if (n > 2000) throw new Error("bad skill count");
+      const skills = [];
+      for (let i = 0; i < n; i++) {
+        guard(r, end);
+        const s = { name: r.str(), level: r.int(), enabled: r.byte(), devotionLevel: r.int(), devotionExp: r.int(), sublevel: r.int(), active: r.byte(), transition: r.byte() };
+        r.str(); r.str(); skills.push(s);
+      }
+      out.skills = { version: v, list: skills, masteriesAllowed: r.int() };
+    } else if (id === 16) {
+      const v = r.int(), st = { version: v };
+      st.playTime = r.int(); st.deaths = r.int();
+      out.stats = st; // deaths first, so death detection survives a layout change further down
+      ["kills","xpFromKills","healthPotions","energyPotions","maxLevel","hitsReceived","hitsInflicted","critsInflicted","critsReceived"].forEach(k => st[k] = r.int());
+      st.greatestDamageDone = r.float();
+      st.perDifficulty = [];
+      for (let d = 0; d < 3; d++) { guard(r, end); st.perDifficulty.push({ greatestMonster: r.str(), greatestMonsterLevel: r.int(), greatestMonsterLife: r.int(), lastMonsterHit: r.str(), lastMonsterHitBy: r.str() }); }
+      st.championKills = r.int(); r.float(); r.float(); st.greatestDamageReceived = r.float();
+      ["heroKills","itemsCrafted","relicsCrafted","transcendentRelicsCrafted","mythicalRelicsCrafted","shrinesRestored","oneShotChests","loreNotes"].forEach(k => st[k] = r.int());
+      st.bossKills = [r.int(), r.int(), r.int()];
+      st.crucibleWave = r.int(); st.crucibleScore = r.int(); r.int(); r.int();
+      st.complete = true;
+      const s2 = r.snap();
+      try { // optional newer fields
+        if (v >= 11) { const n = r.int(); if (n > 5000) throw 0; for (let i = 0; i < n; i++) { guard(r, end); r.str(); r.int(); } st.souls = r.int(); st.essence = r.int(); r.byte(); }
+        guard(r, end); if (r.pos + 8 <= end) { st.uniqueItems = r.int(); st.randomizedItems = r.int(); }
+        guard(r, end);
+      } catch (e) { r.restore(s2); delete st.uniqueItems; delete st.randomizedItems; delete st.souls; delete st.essence; }
+    } else if (id === 17) {
+      out.shrineVersion = r.int();
+      out.shrineLists = [];
+      for (let i = 0; i < 6; i++) {
+        const n = r.int();
+        if (n > 5000) throw new Error("bad shrine list size " + n);
+        const list = [];
+        for (let j = 0; j < n; j++) list.push(r.uid());
+        out.shrineLists.push(list);
+      }
+    }
+  }
+
+
+  /* class names (from Grimtools' game text) */
+  const CLASS = {"01":"Soldier","0102":"Commando","0103":"Witchblade","0104":"Blademaster","0105":"Battlemage","0106":"Warder","0107":"Tactician","0108":"Death Knight","0109":"Warlord","0110":"Thane","02":"Demolitionist","0203":"Pyromancer","0204":"Saboteur","0205":"[ms]Sorcerer[fs]Sorceress","0206":"Elementalist","0207":"Purifier","0208":"Defiler","0209":"Shieldbreaker","0210":"Dreadnaught","03":"Occultist","0304":"Witch Hunter","0305":"Warlock","0306":"Conjurer","0307":"Deceiver","0308":"Cabalist","0309":"Sentinel","0310":"Mystic","04":"Nightblade","0405":"Spellbreaker","0406":"Trickster","0407":"Infiltrator","0408":"Reaper","0409":"Dervish","0410":"Reaver","05":"Arcanist","0506":"Druid","0507":"Mage Hunter","0508":"Spellbinder","0509":"Templar","0510":"Evoker","06":"Shaman","0607":"Vindicator","0608":"Ritualist","0609":"Archon","0610":"Primalist","07":"Inquisitor","0708":"Apostate","0709":"Paladin","0710":"Runekeeper","08":"Necromancer","0809":"Oppressor","0810":"Veilwalker","09":"Oathkeeper","0910":"Zealot","10":"Berserker"};
+  const pickSex = (s, male) => { const m = s.match(/\[ms\](.*?)\[fs\](.*)/); return m ? (male ? m[1] : m[2]) : s; };
+  function classInfo(save) {
+    const masteries = [];
+    ((save.skills && save.skills.list) || []).forEach(s => {
+      const m = s.name.match(/playerclass(\d+)\/_classtraining_class\d+\.dbr$/i);
+      if (m) { const id = m[1].padStart(2, "0"); masteries.push({ id, name: CLASS[id] || "Mastery " + id, level: s.level }); }
+    });
+    masteries.sort((a, b) => a.id.localeCompare(b.id));
+    let key = masteries.map(m => m.id).join("");
+    let name = CLASS[key];
+    if (!name) { const d = (save.tag || "").match(/(\d{2,4})$/); if (d && CLASS[d[1]]) name = CLASS[d[1]]; }
+    return { className: name ? pickSex(name, save.male) : "", masteries };
+  }
+  const DIFF = ["Normal", "Elite", "Ultimate"];
+  const slim = it => it && it.base ? { base: it.base, prefix: it.prefix, suffix: it.suffix, relic: it.relic, relicBonus: it.relicBonus, augment: it.augment, modifier: it.modifier, transmute: it.transmute } : null;
+  /* plain snapshot of everything worth showing */
+  function snapshot(save) {
+    const ci = classInfo(save), b = save.bio || {}, i = save.info || {}, s = save.stats || {};
+    return {
+      className: ci.className, masteries: ci.masteries,
+      level: b.level || save.level, experience: b.experience,
+      physique: b.physique, cunning: b.cunning, spirit: b.spirit, health: b.health, energy: b.energy,
+      unspentAttributes: b.attributePoints, unspentSkills: b.skillPoints, devotionUnlocked: b.totalDevotion, unspentDevotion: b.devotionPoints,
+      iron: i.iron, tributes: i.tributes, lastDifficulty: DIFF[i.lastDifficulty], greatestDifficulty: i.greatestDifficulty,
+      stats: s.version != null ? Object.assign({}, s) : null,
+      gear: save.gear ? { useAlt: save.gear.useAlt, equipment: save.gear.equipment.map(slim), weapons: save.gear.weapons.map(w => w.map(slim)) } : null,
+      readAt: Date.now(),
+    };
+  }
+
+  function parse(buf) {
+    const r = Reader(buf);
+    r.init();
+    if (r.int() !== MAGIC) throw new Error("not a Grim Dawn character file");
+    const headerVersion = r.int();
+    const out = { headerVersion, blocks: [] };
+    out.name = r.wstr();
+    out.male = r.byte();
+    out.tag = r.str();
+    out.level = r.int();
+    out.hardcore = !!r.byte();
+    if (headerVersion >= 2) out.expansionByte = r.byte();
+    r.next(); // header checksum
+    out.dataVersion = r.int();
+    r.uid(); // character id
+
+    while (r.pos < r.len) {
+      const id = r.int();
+      const blen = r.next();
+      const end = r.pos + blen;
+      if (end > r.len) throw new Error("block " + id + " runs past end of file");
+      out.blocks.push(id);
+      const snap = r.snap();
+      try {
+        readBlock(r, id, end, out);
+        if (r.pos > end) throw new Error("overran block");
+      } catch (e) {
+        // couldn't make sense of this block (new game version?): rewind and skip it
+        r.restore(snap);
+        (out.warnings = out.warnings || []).push("block " + id + ": " + e.message);
+      }
+      r.skipTo(end);
+      r.next(); // block checksum
+    }
+    return out;
+  }
+
+  /* --- turning UIDs into shrine ids --- */
+  const hex = b => Array.from(b, x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const hexWords = b => { let s = ""; for (let i = 0; i < 16; i += 4) for (let j = 3; j >= 0; j--) s += b[i + j].toString(16).padStart(2, "0"); return s.toUpperCase(); };
+  const ENCODINGS = { bytes: hex, words: hexWords };
+
+  // Possible ways the six lists are laid out: [restored N,E,U] and [found N,E,U]
+  const LAYOUTS = {
+    A: { restored: [0, 1, 2], found: [3, 4, 5] },
+    B: { restored: [3, 4, 5], found: [0, 1, 2] },
+    C: { restored: [1, 3, 5], found: [0, 2, 4] },
+    D: { restored: [0, 2, 4], found: [1, 3, 5] },
+  };
+
+  /* known: Map(uidHex -> shrineId). Returns per-difficulty restored/found arrays of shrine ids. */
+  function resolve(save, known, forceLayout) {
+    const lists = save.shrineLists || [[], [], [], [], [], []];
+    let enc = "bytes", best = -1;
+    for (const [name, fn] of Object.entries(ENCODINGS)) {
+      let n = 0; lists.forEach(l => l.forEach(u => { if (known.has(fn(u))) n++; }));
+      if (n > best) { best = n; enc = name; }
+    }
+    const fn = ENCODINGS[enc];
+    let total = 0, unknown = 0;
+    const sets = lists.map(l => {
+      const s = new Set();
+      l.forEach(u => { total++; const id = known.get(fn(u)); if (id != null) s.add(id); else unknown++; });
+      return s;
+    });
+    // pick the layout where "restored" is always inside "found" (fewest violations)
+    let layout = forceLayout && LAYOUTS[forceLayout] ? forceLayout : null, scores = {};
+    for (const [k, L] of Object.entries(LAYOUTS)) {
+      let bad = 0;
+      for (let d = 0; d < 3; d++) sets[L.restored[d]].forEach(id => { if (!sets[L.found[d]].has(id)) bad++; });
+      scores[k] = bad;
+    }
+    if (!layout) layout = Object.keys(scores).reduce((a, b) => scores[b] < scores[a] ? b : a, "A");
+    const L = LAYOUTS[layout];
+    const D = ["normal", "elite", "ultimate"];
+    const restored = {}, found = {};
+    D.forEach((d, i) => { restored[d] = [...sets[L.restored[i]]]; found[d] = [...sets[L.found[i]]]; });
+    return { encoding: enc, layout, layoutScores: scores, restored, found, listSizes: lists.map(l => l.length), total, unknown };
+  }
+
+  return { parse, resolve, classInfo, snapshot, hex, hexWords, LAYOUTS, CLASS };
+})();
+if (typeof module !== "undefined") module.exports = GDSave;
+
+/* ===== Grim Dawn game data reader =====
+   Reads item names straight from the player's own game install:
+   database/*.arz (item records) and resources/Text_EN.arc (English text).
+   Files are read in slices, so the big database never has to be loaded whole. */
+const GDDB = (() => {
+  /* ---- LZ4 block decompression ---- */
+  function lz4(src, outSize) {
+    const out = new Uint8Array(outSize);
+    let ip = 0, op = 0;
+    while (ip < src.length) {
+      const token = src[ip++];
+      let lit = token >> 4;
+      if (lit === 15) { let b; do { b = src[ip++]; lit += b; } while (b === 255); }
+      if (op + lit > outSize || ip + lit > src.length) throw new Error("lz4: literal overrun");
+      out.set(src.subarray(ip, ip + lit), op); ip += lit; op += lit;
+      if (ip >= src.length) break; // last sequence has no match
+      const off = src[ip] | (src[ip + 1] << 8); ip += 2;
+      if (off === 0 || off > op) throw new Error("lz4: bad offset");
+      let len = token & 15;
+      if (len === 15) { let b; do { b = src[ip++]; len += b; } while (b === 255); }
+      len += 4;
+      if (op + len > outSize) throw new Error("lz4: match overrun");
+      for (let i = 0; i < len; i++, op++) out[op] = out[op - off];
+    }
+    if (op !== outSize) throw new Error("lz4: size mismatch");
+    return out;
+  }
+
+  const ascii = (u8, a, b) => { let s = ""; for (let i = a; i < b; i++) s += String.fromCharCode(u8[i]); return s; };
+  const slice = async (file, a, n) => new Uint8Array(await file.slice(a, a + n).arrayBuffer());
+
+  /* ---- ARZ database ---- */
+  async function openArz(file) {
+    const h = new DataView((await slice(file, 0, 24)).buffer);
+    const hdr = { recStart: h.getInt32(4, true), recSize: h.getInt32(8, true), recCount: h.getInt32(12, true), strStart: h.getInt32(16, true), strSize: h.getInt32(20, true) };
+    if (hdr.recStart <= 0 || hdr.strStart <= 0 || hdr.recCount <= 0 || hdr.strStart + hdr.strSize > file.size) throw new Error(file.name + " doesn't look like a Grim Dawn database");
+    // string table
+    const sb = await slice(file, hdr.strStart, hdr.strSize);
+    const sv = new DataView(sb.buffer);
+    const n = sv.getInt32(0, true); const strings = new Array(n); let p = 4;
+    for (let i = 0; i < n; i++) { const l = sv.getInt32(p, true); p += 4; strings[i] = ascii(sb, p, p + l); p += l; }
+    // record table
+    const rb = await slice(file, hdr.recStart, hdr.recSize);
+    const rv = new DataView(rb.buffer); const index = new Map(); p = 0;
+    for (let i = 0; i < hdr.recCount; i++) {
+      const name = strings[rv.getInt32(p, true)]; p += 4;
+      const tl = rv.getInt32(p, true); p += 4 + tl;
+      const off = rv.getInt32(p, true), csize = rv.getInt32(p + 4, true), dsize = rv.getInt32(p + 8, true); p += 20;
+      index.set(name.toLowerCase().replace(/\\/g, "/"), { off, csize, dsize });
+    }
+    async function record(path) {
+      const e = index.get(path.toLowerCase().replace(/\\/g, "/"));
+      if (!e) return null;
+      const data = lz4(await slice(file, e.off + 24, e.csize), e.dsize);
+      const dv = new DataView(data.buffer); const rec = {}; let q = 0;
+      while (q + 8 <= data.length) {
+        const type = dv.getUint16(q, true), count = dv.getUint16(q + 2, true), key = strings[dv.getInt32(q + 4, true)]; q += 8;
+        const vals = [];
+        for (let i = 0; i < count; i++, q += 4) vals.push(type === 1 ? dv.getFloat32(q, true) : type === 2 ? strings[dv.getInt32(q, true)] : dv.getInt32(q, true));
+        rec[key] = count === 1 ? vals[0] : vals;
+      }
+      return rec;
+    }
+    return { name: file.name, count: hdr.recCount, record, has: p => index.has(p.toLowerCase()) };
+  }
+
+  /* ---- ARC archive (text) ---- */
+  async function openArc(file) {
+    const h = new DataView((await slice(file, 0, 28)).buffer);
+    if (h.getUint32(0, true) !== 0x435241 || h.getUint32(4, true) !== 3) throw new Error(file.name + " isn't a supported archive");
+    const files = h.getInt32(8, true), recTableSize = h.getInt32(16, true), strTableSize = h.getInt32(20, true), recTableOff = h.getInt32(24, true);
+    const tail = await slice(file, recTableOff, recTableSize + strTableSize + files * 44);
+    const tv = new DataView(tail.buffer);
+    const entries = [];
+    for (let i = 0; i < files; i++) {
+      const b = recTableSize + strTableSize + i * 44;
+      const e = { type: tv.getInt32(b, true), off: tv.getInt32(b + 4, true), csize: tv.getInt32(b + 8, true), dsize: tv.getInt32(b + 12, true),
+        parts: tv.getInt32(b + 28, true), firstPart: tv.getInt32(b + 32, true), nameLen: tv.getInt32(b + 36, true), nameOff: tv.getInt32(b + 40, true) };
+      e.name = ascii(tail, recTableSize + e.nameOff, recTableSize + e.nameOff + e.nameLen);
+      entries.push(e);
+    }
+    async function read(e) {
+      if (e.type === 1 && e.csize === e.dsize) return slice(file, e.off, e.csize);
+      const chunks = []; let total = 0;
+      for (let i = 0; i < e.parts; i++) {
+        const pb = (e.firstPart + i) * 12;
+        const off = tv.getInt32(pb, true), cs = tv.getInt32(pb + 4, true), ds = tv.getInt32(pb + 8, true);
+        const raw = await slice(file, off, cs);
+        const part = cs === ds ? raw : lz4(raw, ds);
+        chunks.push(part); total += part.length;
+      }
+      const out = new Uint8Array(total); let o = 0; chunks.forEach(c => { out.set(c, o); o += c.length; });
+      return out;
+    }
+    return { name: file.name, entries, read };
+  }
+
+  function decodeText(u8) {
+    if (u8[0] === 0xff && u8[1] === 0xfe) return new TextDecoder("utf-16le").decode(u8.subarray(2));
+    if (u8[0] === 0xef && u8[1] === 0xbb && u8[2] === 0xbf) u8 = u8.subarray(3);
+    return new TextDecoder("utf-8").decode(u8);
+  }
+  async function loadText(arc, into) {
+    for (const e of arc.entries) {
+      if (!/\.txt$/i.test(e.name)) continue;
+      decodeText(await arc.read(e)).split(/\r?\n/).forEach(line => {
+        const i = line.indexOf("="); if (i <= 0 || line.startsWith("#")) return;
+        into.set(line.slice(0, i).trim(), line.slice(i + 1).trim());
+      });
+    }
+    return into;
+  }
+
+
+  /* ---- turning record fields into tooltip-style stat lines ---- */
+  const DMG = { Physical: "Physical", Pierce: "Pierce", Fire: "Fire", Cold: "Cold", Lightning: "Lightning", Poison: "Acid", Life: "Vitality", Aether: "Aether", Chaos: "Chaos",
+    Elemental: "Elemental", Bleeding: "Bleeding", Disruption: "Skill Disruption", Total: "All", TotalDamage: "All", Manaburn: "Energy Drain", LifeLeech: "Life Leech", ManaLeech: "Energy Leech",
+    PercentCurrentLife: "Current Life", Knockdown: "Knockdown", Stun: "Stun", Freeze: "Freeze", Petrify: "Petrify", Trap: "Entrapment", Confusion: "Confusion", Fear: "Fear", Sleep: "Sleep",
+    Convert: "Mind Control", Fumble: "Reduced Target's Attack Accuracy", ProjectileFumble: "Reduced Target's Projectile Accuracy", Taunt: "Taunt", SlowAttackSpeed: "Attack Speed Slow", RunSpeed: "Slow" };
+  const DOT = { Physical: "Internal Trauma", Fire: "Burn", Cold: "Frostburn", Lightning: "Electrocute", Poison: "Poison", Life: "Vitality Decay", Bleeding: "Bleeding", Aether: "Aether Decay", Chaos: "Chaos Decay" };
+  const CC = new Set(["Stun", "Freeze", "Petrify", "Trap", "Confusion", "Fear", "Sleep", "Convert", "Knockdown"]);
+  const CHAR = { Strength: ["Physique"], Dexterity: ["Cunning"], Intelligence: ["Spirit"], Life: ["Health"], Mana: ["Energy"], OffensiveAbility: ["Offensive Ability"], DefensiveAbility: ["Defensive Ability"],
+    LifeRegen: ["Health Regenerated per Second"], ManaRegen: ["Energy Regenerated per Second"], AttackSpeed: ["Attack Speed"], SpellCastSpeed: ["Casting Speed"], RunSpeed: ["Movement Speed"], TotalSpeed: ["Total Speed"],
+    DodgePercent: ["Chance to Avoid Melee Attacks", "%"], DeflectProjectile: ["Chance to Avoid Projectiles", "%"], IncreasedExperience: ["Experience Gained", "%"], EnergyAbsorptionPercent: ["Energy Absorbed from Enemy Spells", "%"],
+    Constitution: ["Constitution"] };
+  const n = v => { const x = Array.isArray(v) ? v[0] : v; return typeof x === "number" ? x : 0; };
+  const num = v => { const r = Math.round(v * 10) / 10; return (Math.abs(r) >= 1000 ? r.toLocaleString() : String(r)); };
+  const plus = v => (v > 0 ? "+" : "") + num(v);
+  const words = k => k.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, c => c.toUpperCase());
+  const META = /^(Class|templateName|FileDescription|bitmap|artifactBitmap|itemNameTag|itemQualityTag|itemStyleTag|itemClassification|itemLevel|levelRequirement|description|itemText|itemSetName|lootRandomizerName|dropSound|dropSound3D|dropSoundWater|itemCost.*|maxStackSize|actorHeight|actorRadius|scale|castsShadows|mesh|baseTexture|bumpTexture|glowTexture|specTexture|shader|cannotPickUp.*|hidePrefixName|hideSuffixName|quest|marketAdjustmentPercent|numRelicSlots|attributeScalePercent|.*Requirement|.*Equation|itemSkillAutoController|itemSkillLevel|petBonusName|augmentSkillLevel\d+|augmentMasteryLevel\d+|conversionOutType|conversionPercentage.*|racialBonusPercent.*|characterBaseAttackSpeed|characterBaseAttackSpeedTag|offensiveGlobalChance|.*Jitter|.*XOR|randomizerName|lootRandomizerJitter|completedRelicLevel|relicBonus.*|.*Sound.*|.*Fx.*|.*Effect.*)$/;
+
+  function statLines(rec, t) {
+    if (!rec) return [];
+    const L = [], used = new Set(), g = k => n(rec[k]), mark = (...ks) => ks.forEach(k => used.add(k));
+    const chanceOf = (k, s) => { const c = g(k); mark(k); return c && c < 100 ? `${num(c)}% Chance of ${s}` : s; };
+    // armour, block, weapon damage first
+    if (g("defensiveProtection")) { L.push(`${num(g("defensiveProtection"))} Armor`); mark("defensiveProtection"); }
+    if (g("defensiveBlock")) { L.push(`${num(g("defensiveBlockChance"))}% Chance to Block ${num(g("defensiveBlock"))} Damage`); mark("defensiveBlock", "defensiveBlockChance"); }
+    if (g("blockRecoveryTime")) { L.push(`${num(g("blockRecoveryTime"))} Second Shield Recovery`); mark("blockRecoveryTime"); }
+    for (const key of Object.keys(rec)) {
+      if (used.has(key) || META.test(key) || !g(key) && typeof rec[key] !== "string") continue;
+      let m;
+      if ((m = key.match(/^(offensive|retaliation)Slow(\w+?)(Min|Max|DurationMin|DurationMax|Modifier|DurationModifier|Chance|ModifierChance)$/))) {
+        const [, kind, T] = m, P = kind + "Slow" + T, name = DOT[T] || words(T);
+        if (m[3] === "Min" || m[3] === "DurationMin") {
+          const per = g(P + "Min"), dur = g(P + "DurationMin"), mx = g(P + "Max");
+          if (per) { const tot = per * (dur || 1), totMax = mx > per ? mx * (dur || 1) : 0; L.push(chanceOf(P + "Chance", `${num(tot)}${totMax ? "-" + num(totMax) : ""} ${name}${DOT[T] ? " Damage" : ""}${dur ? ` over ${num(dur)} Seconds` : ""}${kind === "retaliation" ? " Retaliation" : ""}`)); }
+          mark(P + "Min", P + "Max", P + "DurationMin", P + "DurationMax");
+        } else if (m[3] === "Modifier") { L.push(chanceOf(P + "ModifierChance", `${plus(g(key))}% ${name}${DOT[T] ? " Damage" : ""}${kind === "retaliation" ? " Retaliation" : ""}`)); mark(key); }
+        else if (m[3] === "DurationModifier") { L.push(`${plus(g(key))}% ${name} Duration`); mark(key); }
+        continue;
+      }
+      if ((m = key.match(/^(offensive|retaliation)(\w+?)(Min|Max|Modifier|Chance|ModifierChance|DurationMin|DurationModifier)$/)) && (DMG[m[2]] || m[2])) {
+        const [, kind, T] = m, P = kind + T, name = DMG[T] || words(T), ret = kind === "retaliation" ? " Retaliation" : "";
+        if (m[3] === "Min" || m[3] === "Max") {
+          const lo = g(P + "Min"), hi = g(P + "Max");
+          if (CC.has(T)) L.push(chanceOf(P + "Chance", `${num(lo)}${hi > lo ? "-" + num(hi) : ""} Second ${name}${ret}`));
+          else if (T === "PercentCurrentLife") L.push(chanceOf(P + "Chance", `${num(lo)}% Reduction to Enemy's Health${ret}`));
+          else L.push(chanceOf(P + "Chance", `${num(lo)}${hi > lo ? "-" + num(hi) : ""} ${name} Damage${ret}`));
+          mark(P + "Min", P + "Max");
+        } else if (m[3] === "Modifier") { L.push(chanceOf(P + "ModifierChance", `${plus(g(key))}% ${T === "Total" || T === "TotalDamage" ? "to All Damage" : name + (ret || (/Damage$/.test(name) ? "" : " Damage"))}`)); mark(key); }
+        else if (m[3] === "DurationModifier") { L.push(`${plus(g(key))}% ${name} Duration`); mark(key); }
+        else if (m[3] === "Chance" && !rec[P + "Min"]) { L.push(`${num(g(key))}% Chance of ${name}${ret}`); mark(key); }
+        continue;
+      }
+      if ((m = key.match(/^defensive(\w+?)(MaxResist|Modifier|Duration|DurationChance)?$/))) {
+        const T = m[1], name = DMG[T] || words(T);
+        if (T === "Protection" && m[2] === "Modifier") L.push(`${plus(g(key))}% Armor`);
+        else if (T === "Absorption") L.push(`${plus(g(key))}% Armor Absorption`);
+        else if (T === "TotalSpeedResistance") L.push(`${num(g(key))}% Slow Resistance`);
+        else if (T === "Reflect") L.push(`${num(g(key))}% Damage Reflected`);
+        else if (m[2] === "MaxResist") L.push(`${plus(g(key))}% Maximum ${name} Resistance`);
+        else if (m[2] === "Modifier" || !m[2]) {
+          if (CC.has(T) || T === "Disruption") L.push(`${num(g(key))}% Reduced ${name} Duration`);
+          else L.push(`${plus(g(key))}% ${name} Resistance`);
+        } else L.push(`${words(key.replace(/^defensive/, ""))}: ${num(g(key))}`);
+        mark(key); continue;
+      }
+      if ((m = key.match(/^character(\w+?)(Modifier)?$/))) {
+        const base = m[1].replace(/Modifier$/, ""), def = CHAR[base] || CHAR[m[1]];
+        const pct = !!m[2] || /Speed$/.test(base) || (def && def[1] === "%");
+        const label = def ? def[0] : words(base);
+        L.push(`${plus(g(key))}${pct ? "%" : ""} ${label}`); mark(key); continue;
+      }
+      if (key === "skillCooldownReduction") { L.push(`-${num(g(key))}% Skill Cooldown Reduction`); mark(key); continue; }
+      if (key === "skillManaCostReduction") { L.push(`-${num(g(key))}% Skill Energy Cost`); mark(key); continue; }
+      if (key === "augmentAllLevel") { L.push(`${plus(g(key))} to all Skills`); mark(key); continue; }
+      if (/^(offensive|defensive|retaliation|character|skill|pet|racial)/.test(key) && typeof rec[key] !== "string") { L.push(`${words(key)}: ${num(g(key))}`); mark(key); }
+    }
+    return L;
+  }
+  // stats that point at other records (skills, masteries, pet bonuses, conversions)
+  async function linkedLines(rec, rec_, t) {
+    const L = [];
+    if (!rec) return L;
+    const skillName = async p => { const s = await rec_(p); return s ? (t(s.skillDisplayName) || t(s.buffSkillName && (await rec_(s.buffSkillName) || {}).skillDisplayName) || p.split("/").pop()) : p.split("/").pop(); };
+    for (let i = 1; i <= 4; i++) {
+      const mp = rec["augmentMasteryName" + i]; if (mp) L.push(`${plus(n(rec["augmentMasteryLevel" + i]))} to all skills in ${await skillName(mp)}`);
+      const sp = rec["augmentSkillName" + i]; if (sp) L.push(`${plus(n(rec["augmentSkillLevel" + i]))} to ${await skillName(sp)}`);
+    }
+    if (rec.itemSkillName) L.push(`Grants skill: ${await skillName(rec.itemSkillName)}${n(rec.itemSkillLevel) > 1 ? " (level " + num(n(rec.itemSkillLevel)) + ")" : ""}`);
+    for (let i = 1; i <= 3; i++) { const ms = rec["modifiedSkillName" + i]; if (ms) L.push(`Modifies ${await skillName(ms)}`); }
+    if (rec.conversionInType && rec.conversionOutType) L.push(`${num(n(rec.conversionPercentage))}% ${DMG[rec.conversionInType] || rec.conversionInType} Damage converted to ${DMG[rec.conversionOutType] || rec.conversionOutType} Damage`);
+    if (rec.racialBonusRace) { const race = [].concat(rec.racialBonusRace).map(r => t(r) || words(String(r).replace(/^Race\d*/, ""))).join(", "); if (n(rec.racialBonusPercentDamage)) L.push(`${plus(n(rec.racialBonusPercentDamage))}% Damage to ${race}`); if (n(rec.racialBonusPercentDefense)) L.push(`${num(n(rec.racialBonusPercentDefense))}% Less Damage from ${race}`); }
+    if (rec.petBonusName) { const pb = await rec_(rec.petBonusName); const pl = statLines(pb, t); if (pl.length) L.push("Bonus to all pets: " + pl.join(", ")); }
+    return L;
+  }
+
+  /* ---- game folder ---- */
+  const clean = s => (s || "").replace(/\^[a-zA-Z]/g, "").replace(/\{\^[a-zA-Z]\}/g, "").trim();
+  const genderize = s => { const m = s.match(/\[ms\](.*?)\[fs\](.*)/); return m ? m[1] : s; };
+
+  /* files: array of {path, file}. Expansion databases override the base game. */
+  async function openGame(files) {
+    const byPath = p => files.filter(f => p.test(f.path.replace(/\\/g, "/")));
+    const order = f => { const m = f.path.match(/gdx(\d+)/i); return m ? +m[1] : 0; };
+    const arzFiles = byPath(/(^|\/)database\/[^/]+\.arz$/i).sort((a, b) => order(a) - order(b));
+    const textFiles = byPath(/(^|\/)resources\/text_en\.arc$/i).sort((a, b) => order(a) - order(b));
+    if (!arzFiles.length) throw new Error("No game database found. Pick your Grim Dawn install folder (the one with Grim Dawn.exe).");
+    const dbs = []; for (const f of arzFiles) dbs.push(await openArz(f.file));
+    const text = new Map(); for (const f of textFiles) await loadText(await openArc(f.file), text);
+    const t = tag => tag ? genderize(clean(text.get(tag) || "")) : "";
+    const cache = new Map();
+    async function rec(path) {
+      if (!path) return null;
+      const k = path.toLowerCase();
+      if (cache.has(k)) return cache.get(k);
+      let r = null; for (let i = dbs.length - 1; i >= 0 && !r; i--) r = await dbs[i].record(path);
+      cache.set(k, r); return r;
+    }
+    async function describe(item) {
+      const base = await rec(item.base);
+      if (!base) return { known: false };
+      const baseName = t(base.itemNameTag) || t(base.description) || clean(base.description || "");
+      const quality = t(base.itemQualityTag) || t(base.itemStyleTag);
+      const isSet = !!base.itemSetName;
+      let prefix = "", suffix = "";
+      if (!isSet && !/Legendary|Epic/i.test(base.itemClassification || "")) {
+        const pr = await rec(item.prefix), su = await rec(item.suffix);
+        prefix = pr ? t(pr.lootRandomizerName) : ""; suffix = su ? t(su.lootRandomizerName) : "";
+      }
+      const relic = item.relic ? await rec(item.relic) : null;
+      const aug = item.augment ? await rec(item.augment) : null;
+      const sections = [];
+      const add = async (title, r) => { if (!r) return; const lines = statLines(r, t).concat(await linkedLines(r, rec, t)); if (lines.length) sections.push({ title, lines }); };
+      await add("", base);
+      if (!isSet && !/Legendary|Epic/i.test(base.itemClassification || "")) { await add(prefix ? "Prefix: " + prefix : "", await rec(item.prefix)); await add(suffix ? "Suffix: " + suffix : "", await rec(item.suffix)); }
+      if (relic) await add("Component: " + (t(relic.description) || clean(relic.description || "")), relic);
+      if (item.relicBonus) await add("Completion bonus", await rec(item.relicBonus));
+      if (aug) await add("Augment: " + (t(aug.description) || clean(aug.description || "")), aug);
+      return {
+        known: true, sections, wiki: baseName,
+        name: [prefix, quality, baseName, suffix].filter(Boolean).join(" ") || item.base.split("/").pop(),
+        rarity: base.itemClassification || "", level: base.itemLevel || null, req: base.levelRequirement || null,
+        cls: base.Class || "", bitmap: base.bitmap || base.artifactBitmap || "",
+        set: base.itemSetName ? t((await rec(base.itemSetName) || {}).setName) : "",
+        component: relic ? (t(relic.description) || clean(relic.description || "")) : "",
+        augment: aug ? (t(aug.description) || clean(aug.description || "")) : "",
+      };
+    }
+    return { describe, dbs: dbs.map(d => d.name + " (" + d.count.toLocaleString() + " records)"), textCount: text.size };
+  }
+
+  return { lz4, openArz, openArc, openGame, statLines };
+})();
+if (typeof module !== "undefined") module.exports = GDDB;
+</script>
+<script>
+/* ---------- DATA ----------
+   [mapId, group, zone, shrine, expansion, normal, elite, ultimate, secret?]
+   requirement: "F" = defeat monsters, null = not on that difficulty, string with " + " = several items */
+const F="F";
+const SHRINES=[
+// Act 1
+[1515,"a1","Burial Hill","The Burial Cave","","Aether Crystal","Aether Shard","Aether Shard"],
+[7546,"a1","Foggy Bank","Cavern","",F,F,F],
+[1517,"a1","Devil's Aquifer","Devil's Aquifer","","Aether Crystal","Aether Shard","Aether Shard"],
+[84288,"a1","Flooded Passage","The Flooded Passage","",F,F,F],
+[1891,"a1","Burrwitch Outskirts","The Burial Cave","","Aether Crystal","Aether Shard","Aether Shard"],
+[89871,"a1","Burrwitch Estates","Burrwitch Estates","",F,F,F],
+[2036,"a1","Warden's Lab","Underground Transit","","Aether Crystal","Aether Shard","Aether Shard"],
+[6652,"a1","Hallowed Hill","Hallowed Hill","FG",null,"Aether Shard","Aether Shard"],
+[673,"a1","East Marsh","Craig's Crags","","Chipped Claw","Severed Claw","Severed Claw"],
+[82909,"a1","Temple of the Three","Temple of the Three","FG",F,F,F],
+[7026,"a1","The Hidden Path","The Hidden Path","FG",null,null,"Riftstone"],
+// Act 2
+[82664,"a2","Arkovian Foothills","Spined Cove","",F,F,F],
+[780,"a2","Rocky Coast","Rocky Coast","","Frozen Heart","Vengeful Wraith","Vengeful Wraith"],
+[1538,"a2","Cronley's Hideout","Cronley's Hideout","","Scavenged Plating","Scavenged Plating + Scrap","Scavenged Plating + Scrap"],
+[89776,"a2","Old Arkovia","Old Arkovia","",F,F,F],
+[2072,"a2","Arkovian Undercity","Arkovian Undercity","","Chilled Steel","Coldstone","Coldstone"],
+[730,"a2","Barren Highlands","Barren Highlands","","Polished Emerald","Imbued Silver","Imbued Silver"],
+[7435,"a2","Steps of Torment","Misery","",F,F,F],
+// Act 3
+[1954,"a3","Mountain Deeps","Mountain Deeps","",F,F,F],
+[1930,"a3","Forgotten Depths","Forgotten Depths","","Serrated Spike","Vicious Jawbone","Vicious Jawbone"],
+[632,"a3","Tyrant's Hold","Tyrant's Hold","","Searing Ember","Enchanted Flint","Enchanted Flint"],
+[687,"a3","Infested Farms","Infested Farms","","Mutagenic Ichor","Mutated Scales","Mutated Scales"],
+[82655,"a3","Den of the Lost","Den of the Lost","",F,F,F],
+[90875,"a3","The Conflagration","The Conflagration","FG",F,F,F],
+[91142,"a3","Port Valbury","Port Valbury","FG",F,F,F],
+[701,"a3","Blood Grove","The Blood Grove","","Chthonic Seal of Binding","Chthonic Seal of Binding + Consecrated Wrappings","Chthonic Seal of Binding + Consecrated Wrappings"],
+[91592,"a3","Stonerend Quarry","Stonerend Quarry","FG",null,F,F],
+[89049,"a3","Darkvale Village","Village of Darkvale","",F,F,F],
+// Act 4
+[1153,"a4","Asterkarn Valley","Asterkarn Valley","","Cracked Lodestone","Amber","Amber"],
+[1297,"a4","Asterkarn Valley","Mogdrogen's Shrine","","Runed Stone of Mogdrogen + Spirit of Mogdrogen + Ancient Heart","Runed Stone of Mogdrogen + Spirit of Mogdrogen + Ancient Heart","Runed Stone of Mogdrogen + Spirit of Mogdrogen + Ancient Heart"],
+[1927,"a4","Tomb of the Damned","Lost Tomb of the Damned","","Ancient Heart","Ancient Heart + Blood of Ch'thon","Ancient Heart + Blood of Ch'thon + Tainted Brain Matter"],
+[90834,"a4","Necropolis","Gates of Necropolis","",F,F,F],
+[2089,"a4","The Black Sepulcher","The Black Sepulcher","","Roiling Blood","Hollowed Fang","Hollowed Fang"],
+[91304,"a4","Tomb of the Watchers","Tomb of the Watchers","FG",F,F,F],
+[7401,"a4","Bastion of Chaos","Bastion of Chaos","",F,F,F],
+[1368,"a4","Secret area","Sanctum of the Immortal","",null,null,"Skeleton Key",1],
+// Act 5
+[90563,"a5","Gloomwald","Gloomwald","AoM",F,F,F],
+[6979,"a5","Ugdenbog","Den of the Ancient","FG",null,null,"Ugdenbloom"],
+[1852,"a5","Ugdenbog","Tomb of Ugdall","AoM","Ectoplasm","Vengeful Wraith","Vengeful Wraith"],
+[82676,"a5","Barrowholm Mine","Barrowholm Mine","FG",null,null,F],
+[84310,"a5","Ancient Grove","Ancient Grove","AoM",F,F,F],
+[84359,"a5","Void's Edge","Desolate Wastes","FG",null,F,F],
+// Act 6
+[1202,"a6","Malmouth","Malmouth Outskirts","AoM","Aether Shard","Aethersteel Bolts","Aethersteel Bolts"],
+[82738,"a6","Ransacked Lighthouse","Ransacked Lighthouse","FG",F,F,F],
+[89467,"a6","Crown Hill","Crown Hill","AoM",F,F,F],
+[7406,"a6","The Infestation","The Infestation","FG",null,null,F],
+[1820,"a6","Secret area","Sanctum of the Chosen","AoM",null,null,"Skeleton Key",1],
+// Forgotten Gods
+[12268,"fg","Splendors of the Shattered Realm","Splendors of the Shattered Realm","FG","Aether Crystal","Celestial Lotus","Celestial Lotus"],
+[91897,"fg","Temple of Osyr","Temple of Osyr","FG",F,F,F],
+[6998,"fg","Korvan Oasis","Hidden Refuge","FG","Battered Shell","Rigid Shell","Rigid Shell"],
+[91486,"fg","Cairan Docks","Cairan Docks","FG",F,F,F],
+[83089,"fg","Sandblown Ruins","Sandblown Ruins","FG",F,F,F],
+[7505,"fg","Sanctuary of Horran","Sanctuary of Horran","FG",F,F,F],
+[8588,"fg","Ruins of Abyd","Ruins of Abyd","FG","Chilled Steel + Cracked Lodestone + Searing Ember","Radiant Gem","Radiant Gem"],
+[12204,"fg","Valley of the Chosen","Tomb of Nephos","FG",F,F,F],
+[90268,"fg","Sunward Spire","Sunward Spire","FG",F,F,F],
+[12218,"fg","Tomb of the Eldritch Sun","Tomb of the Eldritch Sun","FG",F,F,F],
+[12414,"fg","Tomb of the Heretic","Tomb of the Heretic","FG",F,F,F],
+[8953,"fg","Secret area","Sanctum of the Chosen","FG",null,null,"Skeleton Key",1],
+// Fangs of Asterkarn
+[91145,"foa","Frostveil Highlands","Frostveil Highlands","FoA",F,F,F],
+[79434,"foa","Voldur River","Voldur River","FoA","Frozen Aster","Frozen Aster","Frozen Aster"],
+[87727,"foa","Ruins of Utak Kunar","Ruins of Utak Kunar","FoA","Frozen Aster","Frozen Aster","Frozen Aster"],
+[91463,"foa","Dread Wastes","Dread Wastes","FoA",F,F,F],
+[92197,"foa","Temple of N'erf","The Threshold Between","FoA",null,null,"Skeleton Key",1],
+[88110,"foa","Scarstone","Scarstone Depths","FoA",F,F,F],
+[89278,"foa","Aurora Peaks","Aurora Pinnacle","FoA",F,F,F],
+].map(r=>({id:r[0],g:r[1],zone:r[2],name:r[3],exp:r[4],req:{normal:r[5],elite:r[6],ultimate:r[7]},secret:!!r[8]}));
+
+
+/* in-game shrine UIDs (from Grimtools), used to match save data */
+const SHRINE_UID={"632":"C382F36C294166A083C1B0B41DE5A22A","673":"BBDECE59424160724ACA49A94B610510","687":"A04EB2D192436062CADC81B7E09244D8","701":"E5499FF58E4C3A0C161EECA3F69961A1","730":"9DAD78650645D99B7DE6EDB1C32E5F80","780":"9D0815032143B212C712F4B3D842894B","1153":"2E2C25ACCD4824BFDFCE9B9008E29EA9","1202":"3674D129C8426DBB432B21B3F6D64B10","1297":"0DC28D1D28476129EAEC298B04B86666","1368":"18866286004B485E97A4E6B0234D4DA1","1515":"9A81F42DA94CE12347AEE98B28D35045","1517":"61086CB1CF47D6AE4FA88D882DC65220","1538":"CDFD90862B4636D173590DBDFED86B3D","1820":"A8CB391D7141307AD4D4DE8A618DE494","1852":"539B71BE0B4DA70A45C3429D08317E50","1891":"CA1B042036492E67970265AA9CF5FB7E","1927":"83A9B0DFCD4AC84AE2E90EA5ABA4B2C5","1930":"3E6DAE8CEE476BA9226CB1B948186A7E","1954":"EB21C4EC1B4F37B3D24832B040CA2943","2036":"6FBF04F22A4204AFD97ACA86880FC90A","2072":"AE246E11034643C3251BB7862A004E33","2089":"42A15B9C974B3ECFE8DD9F9144C01889","6652":"EBD5AD8CAE4791AB58D82AB9E42CB9A3","6979":"3A947875F243E3AE4E46FF97D3F9EBA8","6998":"9D4DD881BF4F8252BE1734B7EA3DCFA8","7026":"595CC465AE49A3F7866F159BA43C6680","7401":"E5023C0E2A41E59A585B37874D7A6CAA","7406":"19752EB92040CEB28C4F12BD3E8AD867","7435":"32E4FA0BAF46C0074D8326A1BA29F8E4","7505":"47B8EDB79F4D0618BA6D93B02FCFB1F1","7546":"3A8F8549AC4AA58B669A7CB4116D2150","8588":"026890081844D18AFD1795AA76FDE323","8953":"B1922B052C43414751DF2D992187A04F","12204":"BA46A866C8472C7FB9BE9B8BFC7FA39B","12218":"169B72859C4C1E7A39F698904E008359","12268":"BDFAB18E2040026D9651FAACD7D6E4E9","12414":"1826070D254B267DBD9CF484D6F05544","79434":"2BDC6EBBA34E2A36D89DE0A92953535A","82655":"AECF41653B447730D311F3AA0C4AC79F","82664":"CBE360374841041F12A12394CF43C633","82676":"590F8402CF4A43578BD48B9A8D70486B","82738":"0D4709FE304727FCA53454B15D2864AF","82909":"40FAFF5B0A4786DF51D45A8BCE8FB601","83089":"F6AABED18949EC841B2B50A02966821E","84288":"AD09565C27422B44826640AB36387B9B","84310":"84B8A500B8477680A2581A8C38149C71","84359":"31029C40B34C4F49967D2F9598636308","87727":"2AB3A28EE34C2ADFFF3E59AF411B9175","88110":"ED734B918E49A1312BE34F90D7D222E1","89049":"576655FE984B93C873F31BB9543537AA","89278":"5B3F3E757144EE4C6030C4B29C9E7737","89467":"C0244224B8475A0D4C726BB37079D2A5","89776":"8D150A50BE4DAAED56B9398547564DAF","89871":"89ED13C61149447787E5C390FF07126A","90268":"36087FB4DB472EBE3120128F4BE917A5","90563":"DC084AD54E496805218BA78868D9096E","90834":"8EFBDE967E45A63186F8F588980B7290","90875":"C167824A9346AC0449F4A2AF42B25266","91142":"7D92E6B7934EF59944834A9A143B398A","91145":"F130148915401B81C11A3E9F44214129","91304":"1CE947967F455AB6B2EEB5A860470389","91463":"1C42E0543E456266C105F0894C320929","91486":"F6D2B6EFEE4892681011F195D9E344F6","91592":"5110A7CA4C40CB8E15D236B4BA729B2D","91897":"763A3C9D2444F602750BC2BAE51E3488","92197":"743A9F98C34147430FE2B2AA57AEDB9B"};
+const UID_TO_SHRINE=new Map(Object.entries(SHRINE_UID).map(([id,u])=>[u,+id]));
+const GROUPS=[["a1","Act 1"],["a2","Act 2"],["a3","Act 3"],["a4","Act 4"],["a5","Act 5"],["a6","Act 6"],["fg","Forgotten Gods"],["foa","Fangs of Asterkarn"]];
+const DIFFS=[["normal","Normal"],["elite","Elite"],["ultimate","Ultimate"]];
+const EXP_LABEL={AoM:"AoM",FG:"FG",FoA:"FoA"};
+const CAP=55;
+
+/* ---------- STATE ---------- */
+const KEY="gdhc-tracker-v1";
+let S;
+function blank(){return{chars:[],active:null,diff:"normal",exp:{AoM:true,FG:true,FoA:true},hideDone:false,fightOnly:false,spoilers:false,sel:null,open:{}}}
+function load(){try{const t=localStorage.getItem(KEY);S=t?Object.assign(blank(),JSON.parse(t)):blank()}catch(e){S=blank()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function uid(){return Math.random().toString(36).slice(2,10)}
+function cur(){return S.chars.find(c=>c.id===S.active)||null}
+function newChar(name,cls,level){const c={id:uid(),name,cls,level:+level||1,status:"alive",created:Date.now(),done:{normal:{},elite:{},ultimate:{}},bonus:0};S.chars.push(c);S.active=c.id;save();return c}
+
+/* ---------- HELPERS ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function available(s,d){return s.req[d]!=null&&(!s.exp||S.exp[s.exp])}
+function isDone(c,d,id){return !!(c&&c.done[d]&&c.done[d][id])}
+function countDiff(c,d){const list=SHRINES.filter(s=>available(s,d));return[list.filter(s=>isDone(c,d,s.id)).length,list.length]}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),1800)}
+const CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+
+/* ---------- RENDER ---------- */
+function render(){
+  const c=cur();
+  // character select
+  const sel=$("#charSel");
+  const real=S.chars.filter(x=>!x.sample);
+  sel.innerHTML=(c&&!c.sample?"":`<option value="" selected disabled>${real.length?"Choose a character":"No characters yet"}</option>`)+real.map(x=>`<option value="${x.id}" ${x.id===S.active?"selected":""}>${x.status==="fallen"?"† ":""}${esc(x.name)}</option>`).join("");
+  $("#editChar").disabled=!c;
+
+  // character card
+  const cc=$("#charCard");
+  if(c){
+    cc.className="card charcard"+(c.status==="fallen"?" dead":"");
+    cc.innerHTML=`<div class="sig">${esc(c.name[0]||"?").toUpperCase()}</div><div><div class="nm">${esc(c.name)} <span class="badge ${c.status==="fallen"?"dead":"alive"}">${c.status==="fallen"?"Fallen":"Alive"}</span>${c.link?' <span class="tag sync" title="Updated from your save files">SYNCED</span>':""}</div><div class="meta">Level ${c.status==="fallen"?c.deathLevel||c.level:c.level}${c.cls?" · "+esc(c.cls):""}</div></div>`;
+  } else {
+    cc.className="card charcard";
+    cc.innerHTML=`<div class="sig">+</div><div><div class="nm">No character</div><div class="meta">Create one to start tracking.</div></div>`;
+  }
+  $("#lockedNote").innerHTML=c&&c.status==="fallen"?`<div class="locked">† ${esc(c.name)} has fallen${c.cause?" (“"+esc(c.cause)+"”)":""}. This checklist is read-only. <a href="#fallen">See the Hall of the Fallen</a>.</div>`:"";
+
+  // stats
+  let totDone=0,totAll=0;
+  DIFFS.forEach(([d])=>{const[a,b]=countDiff(c,d);totDone+=a;totAll+=b});
+  const bonus=c?c.bonus||0:0;
+  const dp=Math.min(CAP,totDone+bonus);
+  $("#dpVal").innerHTML=`${dp}<span> / ${CAP}</span>`; $("#dpBar").style.width=(dp/CAP*100)+"%";
+  $("#bonusVal").textContent=bonus;
+  const[dd,dt]=countDiff(c,S.diff);
+  $("#diffLabel").textContent=DIFFS.find(x=>x[0]===S.diff)[1]+" shrines";
+  $("#diffVal").innerHTML=`${dd}<span> / ${dt}</span>`; $("#diffBar").style.width=(dt?dd/dt*100:0)+"%";
+  $("#allVal").innerHTML=`${totDone}<span> / ${totAll}</span>`; $("#allBar").style.width=(totAll?totDone/totAll*100:0)+"%";
+
+  // tabs
+  $("#tabs").innerHTML=DIFFS.map(([d,l])=>{const[a,b]=countDiff(c,d);return`<button role="tab" aria-selected="${d===S.diff}" data-diff="${d}">${l}<span class="ct">${a}/${b}</span></button>`}).join("");
+
+  // filters
+  $("#hideDone").checked=S.hideDone;$("#fightOnly").checked=S.fightOnly;$("#spoilers").checked=S.spoilers;
+  document.querySelectorAll("[data-exp]").forEach(i=>i.checked=!!S.exp[i.dataset.exp]);
+
+  renderList(c);renderShop(c);renderHall();renderMap();
+}
+
+function renderList(c){
+  const q=$("#search").value.trim().toLowerCase(), d=S.diff;
+  const html=GROUPS.map(([g,label])=>{
+    const all=SHRINES.filter(s=>s.g===g&&available(s,d));
+    if(!all.length) return "";
+    const done=all.filter(s=>isDone(c,d,s.id)).length;
+    const rows=all.filter(s=>{
+      if(S.hideDone&&isDone(c,d,s.id))return false;
+      if(S.fightOnly&&s.req[d]!==F)return false;
+      if(q&&!(s.zone+" "+s.name+" "+(s.req[d]===F?"defeat monsters fight":s.req[d])).toLowerCase().includes(q))return false;
+      return true;
+    }).map(s=>rowHTML(s,c,d)).join("");
+    const open=S.open[g]!==false;
+    return `<details class="act${done===all.length?" complete":""}" data-g="${g}" ${open?"open":""}>
+      <summary><span class="chev">▶</span><h2>${label}</h2><span class="mini"><i style="width:${done/all.length*100}%"></i></span><span class="ct">${done}/${all.length}</span></summary>
+      ${rows||`<div class="empty">Nothing to show with current filters.</div>`}
+    </details>`;
+  }).join("");
+  $("#list").innerHTML=html||`<div class="card empty">No shrines match. Check your expansion settings.</div>`;
+}
+
+function rowHTML(s,c,d){
+  const done=isDone(c,d,s.id), r=s.req[d];
+  const hide=s.secret&&!S.spoilers;
+  const zone=hide?"Secret area (hidden)":s.zone;
+  const name=hide?"??? Secret shrine":s.name;
+  const req=r===F?`<span class="fight">⚔ Defeat monsters</span>`:"Offer: "+esc(r).split(" + ").join(" · ");
+  const onlyHere=s.req.normal?"":(!s.req.elite?"Ultimate only":"Elite & Ultimate");
+  const found=!done&&c&&c.found&&c.found[d]&&c.found[d][s.id];
+  return `<div class="row${done?" done":""}${S.sel===s.id?" sel":""}" data-id="${s.id}">
+    <button class="chk" data-toggle="${s.id}" aria-label="${done?"Unmark":"Mark"} ${esc(name)} restored" aria-pressed="${done}">${CHECK}</button>
+    <div><div class="nm">${esc(name)}</div><div class="zone">${esc(zone)}</div><div class="req">${hide?"Enable “Show secret areas” to reveal":req}</div></div>
+    <div class="tags">${found?`<span class="tag found" title="Discovered in game but not restored yet">FOUND</span>`:""}${onlyHere?`<span class="tag only">${onlyHere}</span>`:""}${s.secret?`<span class="tag secret">SECRET</span>`:""}${s.exp?`<span class="tag ${s.exp.toLowerCase()}">${EXP_LABEL[s.exp]}</span>`:""}<button class="pin" data-map="${s.id}" title="Show on map">Map</button></div>
+  </div>`;
+}
+
+function renderShop(c){
+  const d=S.diff, tally={}; let fights=0;
+  SHRINES.filter(s=>available(s,d)&&!isDone(c,d,s.id)).forEach(s=>{
+    const r=s.req[d]; if(r===F){fights++;return}
+    r.split(" + ").forEach(it=>{const m=it.match(/^(.*?) ×(\d+)$/);const n=m?m[1]:it;tally[n]=(tally[n]||0)+(m?+m[2]:1)});
+  });
+  const items=Object.entries(tally).sort((a,b)=>a[0].localeCompare(b[0]));
+  $("#shopTitle").textContent=`Still needed on ${DIFFS.find(x=>x[0]===d)[1]}`;
+  $("#shopList").innerHTML=(items.length?items.map(([n,k])=>`<li><span>${esc(n)}</span><span>${k} shrine${k>1?"s":""}</span></li>`).join(""):`<li><span>No items left</span><span></span></li>`)+
+    `<li><span style="color:var(--ember)">⚔ Combat cleanses</span><span>${fights} left</span></li>`;
+}
+
+function shrineCount(x,d){return Object.keys((x.done||{})[d]||{}).length}
+function renderHall(){
+  const dead=S.chars.filter(x=>x.status==="fallen");
+  $("#hallCount").textContent=dead.length?`(${dead.length})`:"";
+  if($("#fallenView").hidden)return;
+  const sort=S.hallSort||"recent";
+  const tot=x=>DIFFS.reduce((t,[d])=>t+shrineCount(x,d),0);
+  const lvl=x=>x.deathLevel||x.level||0;
+  dead.sort(sort==="level"?(a,b)=>lvl(b)-lvl(a):sort==="shrines"?(a,b)=>tot(b)-tot(a):(a,b)=>(b.diedAt||0)-(a.diedAt||0));
+  $("#hallSort").value=sort;
+  const top=dead.reduce((m,x)=>Math.max(m,lvl(x)),0);
+  const avg=dead.length?Math.round(dead.reduce((t,x)=>t+lvl(x),0)/dead.length):0;
+  const alive=S.chars.filter(x=>x.status!=="fallen").length;
+  $("#hallStats").innerHTML=[["Fallen",dead.length],["Highest level reached",top||"–"],["Average level at death",avg||"–"],["Still alive",alive]]
+    .map(([l,v])=>`<div class="card stat"><div class="label">${l}</div><div class="val">${v}</div></div>`).join("");
+  $("#graves").innerHTML=dead.length?dead.map(x=>{
+    const dev=Math.min(CAP,tot(x)+(x.bonus||0));
+    const when=x.diedAt?new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Unknown date";
+    const cls=x.cls||(x.tag?x.tag.replace(/^tag/i,""):"");
+    return `<article class="grave" data-gid="${x.id}">
+      <button class="trash" data-trash="${x.id}" title="Remove from the Hall" aria-label="Remove ${esc(x.name)} from the Hall of the Fallen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
+      ${x.sample?'<span class="tag example">EXAMPLE</span>':""}
+      <div class="cross">†</div>
+      <div class="gn">${esc(x.name)}</div>
+      <div class="gl">Level ${lvl(x)}${cls?" · "+esc(cls):""}</div>
+      <div class="gd">Fell ${when}${x.link?" · from save":""}</div>
+      <div class="gs"><div><b>${shrineCount(x,"normal")}</b><span>Normal</span></div><div><b>${shrineCount(x,"elite")}</b><span>Elite</span></div><div><b>${shrineCount(x,"ultimate")}</b><span>Ultimate</span></div><div><b>${dev}</b><span>Devotion</span></div></div>
+      <div class="ep${x.cause?"":" empty"}" data-ep="${x.id}" title="Click to edit">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Last hit by "+esc(x.killedBy):"Add how they fell…"}</div>
+      <div class="gact">${x.snap?`<button class="btn sm" data-stats="${x.id}">View stats</button>`:""}${x.snap&&x.snap.gear?`<button class="btn sm" data-gear="${x.id}">View gear</button>`:""}${x.buildUrl?`<a class="btn sm" href="${esc(x.buildUrl)}" target="_blank" rel="noopener">View build ↗</a><button class="btn sm ghost" data-build="${x.id}" title="Change build link" aria-label="Change build link">✎</button>`:`<button class="btn sm" data-build="${x.id}">Build on Grimtools</button>`}</div>
+    </article>`}).join(""):`<div class="card empty">No one has fallen. Yet.</div>`;
+}
+function editEpitaph(id){
+  const x=S.chars.find(c=>c.id===id);if(!x)return;
+  const el=document.querySelector(`[data-ep="${id}"]`);
+  el.innerHTML=`<input maxlength="90" placeholder="e.g. Slain by Ravager of Minds, SR 40" aria-label="How ${esc(x.name)} fell">`;
+  const inp=el.querySelector("input");inp.value=x.cause||"";inp.focus();
+  let closed=false;
+  const done=keep=>{if(closed)return;closed=true;if(keep){x.cause=inp.value.trim();save()}renderHall()};
+  inp.onkeydown=e=>{if(e.key==="Enter")done(true);if(e.key==="Escape"){e.stopPropagation();done(false)}};
+  inp.onblur=()=>done(true);
+}
+function route(){
+  const fallen=location.hash==="#fallen";
+  $("#trackerView").hidden=fallen;$("#fallenView").hidden=!fallen;
+  $("#charbar").hidden=fallen;$("#hallLink").hidden=fallen;$("#backLink").hidden=!fallen;
+  document.title=fallen?"Hall of the Fallen · Grim Dawn Hardcore Tracker":"Grim Dawn Hardcore Tracker";
+  scrollTo(0,0);render();
+}
+addEventListener("hashchange",route);
+document.addEventListener("click",e=>{
+  const ep=e.target.closest("[data-ep]");if(ep&&!ep.querySelector("input")){editEpitaph(ep.dataset.ep);return}
+  const v=e.target.closest("[data-view]");if(v){S.active=v.dataset.view;save();location.hash="";}
+});
+const fmt=n=>n==null||isNaN(n)?null:Math.round(n).toLocaleString();
+const fmtTime=s=>{if(s==null)return null;const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h.toLocaleString()}h ${m}m`:`${m}m`};
+function dl(rows){const r=rows.filter(([,v])=>v!=null&&v!=="");return r.length?`<dl>${r.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
+function box(t,rows){const d=dl(rows);return d?`<div class="sbox"><h4>${t}</h4>${d}</div>`:""}
+function showStats(id){
+  const x=S.chars.find(c=>c.id===id);if(!x||!x.snap)return;
+  const s=x.snap,st=s.stats||{},D=["Normal","Elite","Ultimate"];
+  $("#statsT").textContent=x.name;
+  $("#statsSub").textContent=[`Level ${x.deathLevel||s.level}`,s.className||x.cls,x.status==="fallen"&&x.diedAt?"Fell "+new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):""].filter(Boolean).join(" · ");
+  const pct=(a,b)=>a!=null&&b?` (${Math.round(a/b*100)}%)`:"";
+  let html="";
+  if(s.masteries&&s.masteries.length)html+=`<div class="mast" style="margin-bottom:12px">${s.masteries.map(m=>`<span>${esc(m.name)} ${m.level}</span>`).join("")}</div>`;
+  if(s.physique!=null)html+=`<div class="attrs"><div><b>${fmt(s.physique)}</b><span>Physique</span></div><div><b>${fmt(s.cunning)}</b><span>Cunning</span></div><div><b>${fmt(s.spirit)}</b><span>Spirit</span></div></div>`;
+  html+=`<div class="sgrid">`+
+    box("Character",[["Experience",fmt(s.experience)],["Base health",fmt(s.health)],["Base energy",fmt(s.energy)],["Devotion unlocked",fmt(s.devotionUnlocked)],["Unspent skill points",fmt(s.unspentSkills)],["Unspent attribute points",fmt(s.unspentAttributes)],["Iron",fmt(s.iron)],["Tributes",fmt(s.tributes)],["Last difficulty played",s.lastDifficulty]])+
+    box("Combat",[["Time played",fmtTime(st.playTime)],["Monsters killed",fmt(st.kills)],["Heroes killed",fmt(st.heroKills)],["Champions killed",fmt(st.championKills)],["Bosses killed (N / E / U)",st.bossKills?st.bossKills.map(fmt).join(" / "):null],["Deaths",fmt(st.deaths)],["Greatest damage dealt",fmt(st.greatestDamageDone)],["Greatest damage taken",fmt(st.greatestDamageReceived)]])+
+    box("Hits & potions",[["Hits dealt",fmt(st.hitsInflicted)],["Critical hits dealt",st.critsInflicted!=null?fmt(st.critsInflicted)+pct(st.critsInflicted,st.hitsInflicted):null],["Hits taken",fmt(st.hitsReceived)],["Critical hits taken",fmt(st.critsReceived)],["Health potions used",fmt(st.healthPotions)],["Energy potions used",fmt(st.energyPotions)],["XP from kills",fmt(st.xpFromKills)]])+
+    box("Exploration & loot",[["Shrines restored",fmt(st.shrinesRestored)],["One-shot chests opened",fmt(st.oneShotChests)],["Lore notes found",fmt(st.loreNotes)],["Legendary/epic items found",fmt(st.uniqueItems)],["Randomized items found",fmt(st.randomizedItems)],["Items crafted",fmt(st.itemsCrafted)],["Relics crafted",fmt(st.relicsCrafted)],["Transcendent relics",fmt(st.transcendentRelicsCrafted)],["Mythical relics",fmt(st.mythicalRelicsCrafted)],["Best Crucible wave",st.crucibleWave?fmt(st.crucibleWave):null],["Best Crucible score",st.crucibleScore?fmt(st.crucibleScore):null]])+
+    `</div>`;
+  if(st.perDifficulty){
+    const rows=st.perDifficulty.map((p,i)=>p.greatestMonster||p.lastMonsterHitBy?`<tr><td>${D[i]}</td><td>${esc(p.greatestMonster||"–")}${p.greatestMonsterLevel?` <span class="note">lvl ${p.greatestMonsterLevel}</span>`:""}</td><td>${esc(p.lastMonsterHitBy||"–")}</td></tr>`:"").join("");
+    if(rows)html+=`<div class="sbox" style="margin-top:12px"><h4>Records by difficulty</h4><table class="rtable"><tr><th>Difficulty</th><th>Greatest monster slain</th><th>Last hit by</th></tr>${rows}</table></div>`;
+  }
+  $("#statsBody").innerHTML=html;
+  $("#statsFoot").textContent=x.sample?"Example data.":s.readAt?`Read from the save file ${new Date(s.readAt).toLocaleString()}.`:"";
+  $("#statsModal").classList.add("open");
+}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-stats]");if(t)showStats(t.dataset.stats)});
+let buildId=null;
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-build]");if(!t)return;
+  const x=S.chars.find(c=>c.id===t.dataset.build);if(!x)return;
+  buildId=x.id;
+  const folder=x.link?x.link.split("#fallen-")[0]:"";
+  const rel=folder?folder.replace(/\//g,"\\"):"main\\_"+x.name;
+  $("#buildPath").textContent="…\\save\\"+rel.replace(/^save\\/i,"")+"\\player.gdc";
+  $("#buildWhere").textContent="The save folder is usually Documents\\My Games\\Grim Dawn\\save (or Steam\\userdata\\…\\219990\\remote\\save with Steam Cloud). This only works while the character's save file still exists.";
+  $("#buildT").textContent="Build "+x.name+" on Grimtools";
+  $("#buildUrl").value=x.buildUrl||"";$("#buildErr").textContent="";$("#buildClear").hidden=!x.buildUrl;
+  $("#buildModal").classList.add("open");
+});
+$("#buildCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#buildPath").textContent);toast("Path copied")}catch(e){toast("Select the path and copy it manually")}};
+$("#buildForm").onsubmit=e=>{
+  e.preventDefault();const x=S.chars.find(c=>c.id===buildId);if(!x)return;
+  const v=$("#buildUrl").value.trim();
+  let u;try{u=new URL(v)}catch(_){}
+  if(!u||!/(^|\.)grimtools\.com$/i.test(u.hostname)||!/^\/calc\//.test(u.pathname)||u.protocol!=="https:"){$("#buildErr").textContent="That doesn't look like a Grimtools build link (https://www.grimtools.com/calc/…).";return}
+  x.buildUrl=u.href;save();$("#buildModal").classList.remove("open");render();toast("Build link saved");
+};
+$("#buildClear").onclick=()=>{const x=S.chars.find(c=>c.id===buildId);if(x){delete x.buildUrl;save();render()}$("#buildModal").classList.remove("open")};
+let delId=null;
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-trash]");if(!t)return;
+  const x=S.chars.find(c=>c.id===t.dataset.trash);if(!x)return;
+  delId=x.id;
+  $("#delText").textContent=`${x.name} (level ${x.deathLevel||x.level}) will be removed from the Hall of the Fallen for good.${x.link&&!x.sample?" Game sync won't add them back.":""}`;
+  $("#delModal").classList.add("open");
+});
+$("#delConfirm").onclick=()=>{
+  const x=S.chars.find(c=>c.id===delId);$("#delModal").classList.remove("open");if(!x)return;
+  if(x.link&&!x.sample){S.removedGraves=S.removedGraves||[];const f=x.link.split("#fallen-")[0];if(!S.removedGraves.includes(f))S.removedGraves.push(f)}
+  S.chars=S.chars.filter(c=>c.id!==x.id);
+  if(S.active===x.id)S.active=(S.chars.find(c=>c.status!=="fallen")||S.chars[0]||{}).id||null;
+  save();render();toast(`${x.name} removed from the Hall`);
+};
+function seedSample(){
+  if(S.sampleSeeded){const old=S.chars.find(c=>c.sample);if(old&&(!old.snap||!old.snap.gear||!old.gearNames||!old.gearNames.equipment[0].sections)){S.sampleSeeded=false;S.chars=S.chars.filter(c=>c!==old)}else return}S.sampleSeeded=true;
+  const done={normal:{},elite:{},ultimate:{}},t=Date.now()-1000*60*60*24*3;
+  SHRINES.filter(s=>s.req.normal!=null).slice(0,44).forEach(s=>done.normal[s.id]=t);
+  SHRINES.filter(s=>s.req.elite!=null).slice(0,11).forEach(s=>done.elite[s.id]=t);
+  const snap={className:"Warlord",masteries:[{id:"01",name:"Soldier",level:50},{id:"09",name:"Oathkeeper",level:32}],level:67,experience:48210377,physique:642,cunning:298,spirit:310,health:5240,energy:1610,devotionUnlocked:55,unspentSkills:0,unspentAttributes:0,iron:1824550,tributes:212,lastDifficulty:"Elite",
+    stats:{playTime:171240,deaths:1,kills:31508,xpFromKills:30122950,healthPotions:214,energyPotions:61,maxLevel:67,hitsReceived:88412,hitsInflicted:301877,critsInflicted:38251,critsReceived:5120,greatestDamageDone:48211,greatestDamageReceived:9874,championKills:1622,heroKills:241,itemsCrafted:18,relicsCrafted:7,transcendentRelicsCrafted:2,mythicalRelicsCrafted:0,shrinesRestored:55,oneShotChests:96,loreNotes:142,bossKills:[64,31,0],crucibleWave:0,crucibleScore:0,uniqueItems:388,randomizedItems:2917,
+      perDifficulty:[{greatestMonster:"Loghorrean",greatestMonsterLevel:58,lastMonsterHitBy:"Bloodthirster"},{greatestMonster:"Grava'thul",greatestMonsterLevel:72,lastMonsterHitBy:"Ravager of Minds"},{greatestMonster:"",lastMonsterHitBy:""}]}};
+  const G=[["Head","Legendary","Mythical Warborn Helm",94,"Warborn Regalia"],["Amulet","Epic","Pendant of the Oathsworn",80],["Chest","Legendary","Mythical Warborn Cuirass",94,"Warborn Regalia"],["Legs","Rare","Tenacious Runed Legplates of Valor",72],["Feet","Epic","Ironclad Greaves",75],["Hands","Rare","Stalwart Gauntlets of the Bulwark",70],["Ring","Epic","Seal of the Vigilant",68],["Ring","Magical","Fiery Band of Might",60],["Belt","Legendary","Mythical Girdle of the Shieldbearer",90],["Shoulders","Legendary","Mythical Warborn Pauldrons",94,"Warborn Regalia"],["Medal","Epic","Badge of the Faithful",75],["Relic","Legendary","Oath of Iron",84]];
+  snap.gear={useAlt:false,equipment:G.map((g,i)=>({base:"records/items/example/slot"+i+".dbr"})),weapons:[[{base:"records/items/example/sword.dbr"},{base:"records/items/example/shield.dbr"}],[null,null]]};
+  const SS={Head:["412 Armor","+28 Physique","+6% Health","+18% Fire Resistance","+2 to all skills in Soldier"],Amulet:["+22 Physique","+5% Defensive Ability","+20% Lightning Resistance","+1 to all skills in Oathkeeper"],Chest:["640 Armor","+35 Physique","+8% Health","+15% Physical Damage","+2 to Shield Training"],Legs:["398 Armor","+24% Cold Resistance","+30 Health Regenerated per Second"],Feet:["305 Armor","+12% Movement Speed","+25% Acid Resistance"],Hands:["276 Armor","+5% Attack Speed","+40 Offensive Ability"],Ring:["+14% Physical Damage","+12% Chaos Resistance"],Belt:["356 Armor","+18 Physique","+22% Bleeding Resistance","+6% Armor"],Shoulders:["388 Armor","+20% Aether Resistance","+1 to all skills in Soldier"],Medal:["+30 Defensive Ability","+15% Vitality Resistance"],Relic:["+8% Physical Damage","+5% Health","Grants skill: Iron Resolve"]};
+  const ex=(g,cls)=>({base:"",known:true,name:g[2],rarity:g[1],level:g[3],req:g[3]-2,set:g[4]||"",cls,wiki:g[2].replace(/^Mythical /,"").replace(/^(Fiery|Tenacious|Stalwart) /,"").replace(/ of (Might|Valor|the Bulwark)$/,""),component:g[0]==="Chest"?"Ancient Armor Plate":"",augment:"",
+    sections:[{title:"",lines:SS[g[0]]||[]}].concat(g[0]==="Chest"?[{title:"Component: Ancient Armor Plate",lines:["+8% Physical Resistance","+5% Armor"]}]:[])});
+  const gearNames={at:t,equipment:G.map(g=>ex(g,"")),weapons:[[Object.assign(ex(["","Legendary","Mythical Blade of the Vanguard",94]),{sections:[{title:"",lines:["412-560 Physical Damage","Attack speed: Fast","+120% Physical Damage","+25% Internal Trauma Damage","+3 to Blitz"]}]}),Object.assign(ex(["","Epic","Bulwark of the Unyielding",82]),{sections:[{title:"",lines:["28% Chance to Block 1,840 Damage","0.6 Second Shield Recovery","620 Armor","+18% Pierce Resistance"]}]})],[null,null]]};
+  S.chars.push({id:"sample-"+uid(),sample:true,snap,gearNames,name:"Exemplar",cls:"Warlord (Soldier + Oathkeeper)",level:67,deathLevel:67,status:"fallen",created:t-1000*60*60*24*20,diedAt:t,cause:"Slain by Ravager of Minds, Elite Act 4",done,found:{normal:{},elite:{},ultimate:{}},bonus:0});
+  save();
+}
+$("#hallSort").onchange=e=>{S.hallSort=e.target.value;save();renderHall()};
+
+let mapShown=null;
+function renderMap(){
+  const s=SHRINES.find(x=>x.id===S.sel);
+  if(!s){return}
+  const d=S.diff, r=s.req[d], hide=s.secret&&!S.spoilers;
+  const url=`https://www.grimtools.com/map/markers/shrines/${s.id}`;
+  $("#mapHead").innerHTML=`<h3>${esc(hide?"??? Secret shrine":s.name)}</h3><div class="sub">${esc(hide?"Secret area":s.zone)} · ${GROUPS.find(g=>g[0]===s.g)[1]}</div>
+    <div class="reqs">${DIFFS.map(([k,l])=>`<div><span style="color:var(--muted)">${l}:</span> ${s.req[k]==null?'<span style="color:var(--dim)">not present</span>':s.req[k]===F?'<span style="color:var(--ember)">⚔ Defeat monsters</span>':esc(hide?"???":s.req[k])}</div>`).join("")}</div>`;
+  $("#mapOpen").href=url;
+  if(mapShown!==s.id){
+    mapShown=s.id;
+    $("#mapWrap").innerHTML=`<div class="ph"><div>Loading map… If it stays blank, <a href="${url}" target="_blank" rel="noopener">open this shrine on the Grimtools map ↗</a></div></div><iframe src="${url}" title="Map location of ${esc(s.name)}" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
+  }
+}
+
+/* ---------- EVENTS ---------- */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-toggle]");
+  if(t){e.stopPropagation();const c=cur();
+    if(!c){openChar(true);toast("Create a character first");return}
+    if(c.status==="fallen"){toast("Fallen characters are read-only");return}
+    if(c.link){toast("This character is synced from your save files");return}
+    const id=+t.dataset.toggle,d=S.diff;c.done[d]=c.done[d]||{};
+    if(c.done[d][id])delete c.done[d][id];else c.done[d][id]=Date.now();
+    S.sel=id;save();render();return}
+  const tab=e.target.closest("[data-diff]");
+  if(tab){S.diff=tab.dataset.diff;save();render();return}
+  const row=e.target.closest(".row");
+  if(row){S.sel=+row.dataset.id;save();render();if(innerWidth<=1080)$("#mapWrap").scrollIntoView({behavior:"smooth",block:"center"});return}
+  if(e.target.closest("[data-close]")){e.target.closest(".modal").classList.remove("open")}
+});
+document.addEventListener("toggle",e=>{const g=e.target.dataset&&e.target.dataset.g;if(g){S.open[g]=e.target.open;save()}},true);
+
+$("#charSel").onchange=e=>{S.active=e.target.value;save();render()};
+$("#search").oninput=()=>renderList(cur());
+$("#hideDone").onchange=e=>{S.hideDone=e.target.checked;save();render()};
+$("#fightOnly").onchange=e=>{S.fightOnly=e.target.checked;save();render()};
+$("#spoilers").onchange=e=>{S.spoilers=e.target.checked;save();render()};
+document.querySelectorAll("[data-exp]").forEach(i=>i.onchange=()=>{S.exp[i.dataset.exp]=i.checked;save();render()});
+$("#bonusPlus").onclick=()=>{const c=cur();if(!c||c.status==="fallen")return;c.bonus=(c.bonus||0)+1;save();render()};
+$("#bonusMinus").onclick=()=>{const c=cur();if(!c||c.status==="fallen")return;c.bonus=Math.max(0,(c.bonus||0)-1);save();render()};
+
+let editing=false;
+function openChar(isNew){
+  editing=!isNew;const c=cur();
+  $("#charModalT").textContent=isNew?"New hardcore character":"Edit character";
+  $("#fName").value=isNew?"":c.name;$("#fClass").value=isNew?"":c.cls||"";$("#fLevel").value=isNew?1:c.level;
+  $("#charModal").classList.add("open");setTimeout(()=>$("#fName").focus(),30);
+}
+$("#newChar").onclick=()=>openChar(true);
+$("#editChar").onclick=()=>{if(cur())openChar(false)};
+$("#charForm").onsubmit=e=>{e.preventDefault();const n=$("#fName").value.trim();if(!n)return;
+  if(editing){const c=cur();c.name=n;c.cls=$("#fClass").value.trim();c.level=+$("#fLevel").value||c.level;save()}
+  else newChar(n,$("#fClass").value.trim(),$("#fLevel").value);
+  $("#charModal").classList.remove("open");render()};
+
+
+$("#backupBtn").onclick=()=>{$("#bkText").value=JSON.stringify({app:"gdhc",v:1,chars:S.chars,exp:S.exp},null,1);$("#backupModal").classList.add("open")};
+$("#bkCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#bkText").value);toast("Backup copied")}catch(e){$("#bkText").select();toast("Select all and copy manually")}};
+$("#bkRestore").onclick=()=>{try{const d=JSON.parse($("#bkText").value);if(!Array.isArray(d.chars))throw 0;S.chars=d.chars;if(d.exp)S.exp=d.exp;S.active=(S.chars.find(c=>c.status!=="fallen")||S.chars[0]||{}).id||null;save();render();$("#backupModal").classList.remove("open");toast("Backup restored")}catch(e){toast("That doesn't look like a valid backup")}};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open"))});
+
+/* ---------- GAME SYNC ----------
+   Live: File System Access API (Chrome/Edge) keeps a handle to the save folder and
+   re-reads player.gdc whenever the game writes it. Fallback: a one-time folder upload. */
+const Sync=(()=>{
+  const POLL_MS=4000, RESCAN_MS=30000;
+  let dir=null, files=new Map(), timer=null, lastScan=0, busy=false;
+  const report=new Map(); // folder -> details for the debug panel
+  const canLive="showDirectoryPicker" in window;
+
+  // tiny IndexedDB store so the folder is remembered between visits
+  const idb=(mode,fn)=>new Promise((res,rej)=>{try{const o=indexedDB.open("gdhc-sync",1);o.onupgradeneeded=()=>o.result.createObjectStore("kv");o.onsuccess=()=>{try{const tx=o.result.transaction("kv",mode);const r=fn(tx.objectStore("kv"));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)}catch(e){rej(e)}};o.onerror=()=>rej(o.error);setTimeout(()=>rej(new Error("storage timeout")),3000)}catch(e){rej(e)}});
+  const saveHandle=h=>idb("readwrite",s=>h?s.put(h,"dir"):s.delete("dir")).catch(()=>{});
+  const loadHandle=()=>idb("readonly",s=>s.get("dir")).catch(()=>null);
+
+  function status(text,state){$("#syncStatus").textContent=text;$("#syncDot").className="dot"+(state?" "+state:"")}
+  function buttons(mode){ // mode: off | live | reconnect
+    $("#syncConnect").hidden=mode!=="off"||!canLive;
+    $("#syncReconnect").hidden=mode!=="reconnect";
+    $("#syncStop").hidden=mode==="off";
+  }
+
+  async function scan(handle,path="",depth=0,out=[]){
+    for await(const [name,h] of handle.entries()){
+      if(h.kind==="file"&&/\.gdc$/i.test(name))out.push({h,folder:path||handle.name,name});
+      else if(h.kind==="directory"&&depth<5&&!/\.map$|^levels_|^formulas|^settings/i.test(name))await scan(h,path?path+"/"+name:name,depth+1,out);
+    }
+    return out;
+  }
+
+  async function tick(force){
+    if(!dir||busy)return; busy=true;
+    try{
+      if(force||Date.now()-lastScan>RESCAN_MS){
+        const found=await scan(dir);lastScan=Date.now();
+        const keys=new Set(found.map(f=>f.folder+"/"+f.name));
+        found.forEach(f=>{const k=f.folder+"/"+f.name;if(!files.has(k))files.set(k,{h:f.h,folder:f.folder,mod:0})});
+        [...files.keys()].forEach(k=>{if(!keys.has(k))files.delete(k)});
+      }
+      let changed=0;
+      for(const f of files.values()){
+        let file;try{file=await f.h.getFile()}catch(e){continue}
+        if(file.lastModified===f.mod&&!force)continue;
+        if(await ingest(f.folder,await file.arrayBuffer(),file.lastModified)){f.mod=file.lastModified;changed++}
+      }
+      const n=[...report.values()].filter(r=>r.hc).length;
+      status(files.size?`Live · watching ${files.size} save file${files.size>1?"s":""} (${n} hardcore) · checked ${new Date().toLocaleTimeString()}`:"Connected, but no character files found in that folder. Pick the save or main folder.",files.size?"live":"warn");
+      if(changed)render();
+      renderDetails();
+    }catch(e){
+      if(e&&e.name==="NotAllowedError"){stop(true);status("Permission to read the folder was lost. Click Reconnect.","warn");buttons("reconnect")}
+      else status("Sync error: "+(e&&e.message||e),"warn");
+    }finally{busy=false}
+  }
+
+  // returns true when the file was read cleanly
+  async function ingest(folder,buf,mod){
+    let save,res;
+    try{save=GDSave.parse(buf);res=GDSave.resolve(save,UID_TO_SHRINE,S.syncLayout||"")}
+    catch(e){const prev=report.get(folder)||{};report.set(folder,{...prev,folder,ok:false,err:e.message,at:Date.now()});return false} // often a half-written file; try again next tick
+    report.set(folder,{folder,ok:true,at:Date.now(),name:save.name,hc:save.hardcore,level:save.level,tag:save.tag,hv:save.headerVersion,dv:save.dataVersion,blocks:save.blocks.join(","),deaths:save.stats?save.stats.deaths:"?",mod:save.info?save.info.isInMainQuest:"?",dev:save.bio?save.bio.totalDevotion:"?",enc:res.encoding,layout:res.layout,scores:JSON.stringify(res.layoutScores),sizes:res.listSizes.join("/"),unknown:res.unknown,restored:DIFFS.map(([d])=>res.restored[d].length).join("/")});
+    if(!save.hardcore)return true; // site is hardcore only
+    const dead=!!(save.stats&&save.stats.deaths>0);
+    let c=S.chars.find(x=>x.link===folder);
+    // A fallen record is frozen: later reads of the same save never change it, and it
+    // stays in the Hall even after the save is deleted from the game folder.
+    if(c&&c.status==="fallen"){
+      if(dead)return true;
+      c.link=folder+"#fallen-"+(c.diedAt||Date.now()); // folder reused by a new character with the same name
+      c=null;
+    }
+    S.removedGraves=S.removedGraves||[];
+    if(!c&&dead&&S.removedGraves.includes(folder))return true; // user removed this grave; don't bring it back
+    if(!c&&!dead)S.removedGraves=S.removedGraves.filter(f=>f!==folder);
+    if(!c){const keep=cur();c=newChar(save.name,"",save.level);c.link=folder;if(keep&&keep.status!=="fallen"&&keep.link)S.active=keep.id}
+    c.name=save.name;c.level=save.bio?save.bio.level||save.level:save.level;c.tag=save.tag;c.hc=true;c.lastSync=mod;
+    c.snap=GDSave.snapshot(save);if(c.snap.className)c.cls=c.snap.className;
+    if(c.snap.gear)Game.resolveChar(c);
+    const pd=save.stats&&save.stats.perDifficulty,ld=save.info?save.info.lastDifficulty:null;
+    c.killedBy=(pd&&ld!=null&&pd[ld]&&pd[ld].lastMonsterHitBy)||"";
+    c.done={normal:{},elite:{},ultimate:{}};c.found={normal:{},elite:{},ultimate:{}};
+    DIFFS.forEach(([d])=>{res.restored[d].forEach(id=>c.done[d][id]=mod);res.found[d].forEach(id=>c.found[d][id]=1)});
+    if(save.stats&&save.stats.deaths>0&&c.status!=="fallen"){c.status="fallen";c.diedAt=Date.now();c.deathLevel=c.level;c.cause=c.cause||"";toast(`† ${c.name} has fallen`)}
+    save_();return true;
+  }
+  const save_=()=>save();
+
+  function renderDetails(){
+    const rows=[...report.values()];
+    if(!rows.length){$("#syncDetails").textContent="Nothing read yet.";return}
+    $("#syncDetails").innerHTML=`<table>${rows.map(r=>`<tr><td><b>${esc(r.name||r.folder)}</b><br>${esc(r.folder)}</td><td>${r.ok?
+      `${r.hc?"Hardcore":"Softcore (ignored)"} · lvl ${r.level} · ${esc(r.tag)}<br>header v${r.hv}, data v${r.dv}, blocks ${r.blocks}<br>deaths ${r.deaths} · in main campaign ${r.mod} · devotion ${r.dev}<br>shrine lists ${r.sizes} · unmatched ${r.unknown} · ids ${r.enc} · layout ${r.layout} ${esc(r.scores)}<br>restored N/E/U: ${r.restored}`
+      :`<span style="color:var(--ember)">Couldn't read the latest version (the game may still be writing it). Keeping the last good data and retrying. Error: ${esc(r.err)}</span>`}</td></tr>`).join("")}</table>`;
+  }
+
+  async function start(handle){
+    dir=handle;files.clear();lastScan=0;buttons("live");status("Reading save folder…","live");
+    await tick(true);clearInterval(timer);timer=setInterval(()=>tick(false),POLL_MS);
+  }
+  function stop(keepHandle){dir=null;clearInterval(timer);timer=null;files.clear();if(!keepHandle)saveHandle(null);buttons("off");status("Not connected.","")}
+
+  async function connect(){
+    try{const h=await window.showDirectoryPicker({id:"gd-save",mode:"read"});saveHandle(h);await start(h)}
+    catch(e){if(e&&e.name!=="AbortError")status("Couldn't open the folder: "+e.message,"warn")}
+  }
+  async function reconnect(){
+    const h=await loadHandle();if(!h){buttons("off");return}
+    try{if(await h.requestPermission({mode:"read"})==="granted")await start(h)}catch(e){status("Couldn't reconnect: "+e.message,"warn")}
+  }
+  async function resume(){
+    if(!canLive){status("Live sync needs Chrome or Edge. You can still use “Load once”.","");buttons("off");return}
+    const h=await loadHandle().catch(()=>null);
+    if(!h){buttons("off");return}
+    try{const p=await h.queryPermission({mode:"read"});if(p==="granted")await start(h);else{buttons("reconnect");status(`Save folder “${h.name}” remembered. Click Reconnect to resume live sync.`,"warn")}}
+    catch(e){buttons("off")}
+  }
+  async function loadOnce(fileList){
+    const gdc=[...fileList].filter(f=>/\.gdc$/i.test(f.name));
+    if(!gdc.length){status("No character files (.gdc) in that folder.","warn");return}
+    let ok=0;for(const f of gdc){const folder=(f.webkitRelativePath||f.name).split("/").slice(0,-1).join("/")||f.name;if(await ingest(folder,await f.arrayBuffer(),f.lastModified))ok++}
+    status(`Read ${ok} of ${gdc.length} save files once (${new Date().toLocaleTimeString()}). Load again to refresh.`,ok?"":"warn");
+    render();renderDetails();
+  }
+  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true)};
+})();
+
+$("#syncConnect").onclick=()=>Sync.connect();
+$("#syncReconnect").onclick=()=>Sync.reconnect();
+$("#syncStop").onclick=()=>Sync.stop();
+$("#syncOnce").onchange=e=>{Sync.loadOnce(e.target.files);e.target.value=""};
+/* ---------- GAME FILES (item names) ---------- */
+const Game=(()=>{
+  let game=null,busy=null;
+  const canLive="showDirectoryPicker" in window;
+  const idb=(mode,fn)=>new Promise((res,rej)=>{try{const o=indexedDB.open("gdhc-sync",1);o.onupgradeneeded=()=>o.result.createObjectStore("kv");o.onsuccess=()=>{try{const tx=o.result.transaction("kv",mode);const r=fn(tx.objectStore("kv"));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)}catch(e){rej(e)}};o.onerror=()=>rej(o.error);setTimeout(()=>rej(new Error("storage timeout")),3000)}catch(e){rej(e)}});
+  const keep=h=>idb("readwrite",s=>h?s.put(h,"game"):s.delete("game")).catch(()=>{});
+  const recall=()=>idb("readonly",s=>s.get("game")).catch(()=>null);
+  function status(t,state){$("#gameStatus").innerHTML=t;$("#gameDot").className="dot"+(state?" "+state:"")}
+  function buttons(m){$("#gameConnect").hidden=m!=="off"||!canLive;$("#gameReconnect").hidden=m!=="reconnect";$("#gameStop").hidden=m!=="on"}
+  // collect only the files we need: database/*.arz and resources/Text_EN.arc (base game + expansions)
+  async function collect(dir){
+    const out=[];
+    async function grab(d,prefix){
+      for await(const [n,h] of d.entries()){
+        if(h.kind!=="directory")continue;
+        const low=n.toLowerCase();
+        if(low==="database"){for await(const [fn,fh] of h.entries())if(fh.kind==="file"&&/\.arz$/i.test(fn))out.push({path:prefix+n+"/"+fn,file:await fh.getFile()})}
+        else if(low==="resources"){for await(const [fn,fh] of h.entries())if(fh.kind==="file"&&/^text_en\.arc$/i.test(fn))out.push({path:prefix+n+"/"+fn,file:await fh.getFile()})}
+        else if(/^gdx\d+$/.test(low))await grab(h,prefix+n+"/");
+      }
+    }
+    await grab(dir,"");
+    if(!out.length){for await(const [n,h] of dir.entries())if(h.kind==="directory"&&/^grim dawn$/i.test(n)){await grab(h,n+"/");break}}
+    return out;
+  }
+  async function open(dir){
+    status("Reading game files…","live");
+    const files=await collect(dir);
+    game=await GDDB.openGame(files);
+    buttons("on");
+    status(`Connected · ${game.dbs.length} item database${game.dbs.length>1?"s":""} · ${game.textCount.toLocaleString()} text entries`,"live");
+    await resolveAll();
+  }
+  async function connect(){try{const d=await window.showDirectoryPicker({id:"gd-game",mode:"read"});keep(d);await open(d)}catch(e){if(e&&e.name!=="AbortError"){status("Couldn't read the game files: "+esc(e.message),"warn");buttons("off")}}}
+  async function reconnect(){const d=await recall();if(!d)return buttons("off");try{if(await d.requestPermission({mode:"read"})==="granted")await open(d)}catch(e){status("Couldn't reconnect: "+esc(e.message),"warn")}}
+  async function resume(){
+    if(!canLive){buttons("off");status("Reading game files needs Chrome or Edge.","");return}
+    const d=await recall();if(!d)return buttons("off");
+    try{if(await d.queryPermission({mode:"read"})==="granted")await open(d);else{buttons("reconnect");status("Game folder remembered. Click Reconnect to show gear names.","warn")}}catch(e){buttons("off")}
+  }
+  function stop(){game=null;keep(null);buttons("off");status("Not connected. Gear names already looked up are kept.","")}
+  async function describeAll(g){
+    const one=async it=>it?Object.assign({base:it.base},await game.describe(it)):null;
+    return{equipment:await Promise.all(g.equipment.map(one)),weapons:await Promise.all(g.weapons.map(w=>Promise.all(w.map(one))))};
+  }
+  async function resolveChar(c){
+    if(!game||!c.snap||!c.snap.gear)return;
+    try{c.gearNames=await describeAll(c.snap.gear);c.gearNames.at=Date.now();c.gearNames.v=2;save()}catch(e){console.warn("gear lookup failed",e)}
+  }
+  async function resolveAll(){
+    if(!game)return;
+    for(const c of S.chars)if(c.snap&&c.snap.gear&&!c.sample&&(c.status!=="fallen"||!c.gearNames||c.gearNames.v!==2))await resolveChar(c);
+    render();
+  }
+  return{connect,reconnect,resume,stop,resolveChar,get ready(){return!!game}};
+})();
+$("#gameConnect").onclick=()=>Game.connect();
+$("#gameReconnect").onclick=()=>Game.reconnect();
+$("#gameStop").onclick=()=>Game.stop();
+
+const SLOT_NAMES=["Head","Amulet","Chest","Legs","Feet","Hands","Ring","Ring","Belt","Shoulders","Medal","Relic"];
+const SLOT_BY_CLASS=[[/_head$/i,"Head"],[/_shoulders$/i,"Shoulders"],[/_chest$/i,"Chest"],[/_hands$/i,"Hands"],[/_legs$/i,"Legs"],[/_feet$/i,"Feet"],[/_waist$/i,"Belt"],[/amulet$/i,"Amulet"],[/ring$/i,"Ring"],[/medal$/i,"Medal"],[/relic$/i,"Relic"]];
+const LEFT=["Head","Shoulders","Chest","Hands","Legs","Feet"],RIGHT=["Amulet","Medal","Ring","Ring","Belt","Relic"];
+const wikiUrl=name=>"https://grimdawn.fandom.com/wiki/Special:Search?query="+encodeURIComponent(name)+"&go=Go";
+function itemCard(label,raw,info){
+  if(!raw)return`<div class="gslot none"><div class="sl">${label}</div><div class="in">Empty</div></div>`;
+  const fallback=raw.base.split("/").pop().replace(/\.dbr$/i,"");
+  if(!info||!info.known)return`<div class="gslot"><div class="sl">${label}</div><div class="in" style="color:var(--bone)">${esc(fallback)}</div><div class="im">${info?"Not found in your game files":"Connect your game folder to see the name and stats"}</div></div>`;
+  const r=(info.rarity||"").toLowerCase();
+  const meta=[info.level?"Item level "+info.level:"",info.req?"Requires level "+info.req:"",info.set?"Set: "+info.set:""].filter(Boolean).join(" · ");
+  const secs=(info.sections||[]).map(s=>`${s.title?`<h5>${esc(s.title)}</h5>`:""}<ul>${s.lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`).join("");
+  const wiki=info.wiki?`<a class="wiki" href="${wikiUrl(info.wiki)}" target="_blank" rel="noopener" title="Open ${esc(info.wiki)} on the Official Grim Dawn Wiki">Wiki ↗</a>`:"";
+  return`<div class="gslot r-${r}"><div class="sl">${label}${info.rarity?` <span class="rar">· ${esc(info.rarity)}</span>`:""}</div><div class="nm"><div class="in">${esc(info.name)}</div>${wiki}</div>${meta?`<div class="im">${esc(meta)}</div>`:""}${secs?`<div class="st">${secs}</div>`:""}</div>`;
+}
+function showGear(id){
+  const x=S.chars.find(c=>c.id===id);if(!x||!x.snap||!x.snap.gear)return;
+  const g=x.snap.gear,n=x.gearNames||{equipment:[],weapons:[[],[]]};
+  // place each piece in its slot, using the item's type when we know it
+  const placed={};const rings=[];
+  g.equipment.forEach((it,i)=>{
+    const info=n.equipment[i];let slot=SLOT_NAMES[i];
+    if(info&&info.cls){const m=SLOT_BY_CLASS.find(([re])=>re.test(info.cls));if(m)slot=m[1]}
+    if(slot==="Ring")rings.push([it,info]);else placed[slot]=[it,info];
+  });
+  let ri=0;const col=list=>list.map(s=>{const v=s==="Ring"?(rings[ri++]||[null,null]):(placed[s]||[null,null]);return itemCard(s,v[0],v[1])}).join("");
+  const wep=(set,k)=>{const names=n.weapons[k]||[];return`<div class="doll">${itemCard("Main hand",set[0],names[0])}${itemCard("Off hand",set[1],names[1])}</div>`};
+  const hasSet2=g.weapons[1]&&(g.weapons[1][0]||g.weapons[1][1]);
+  $("#gearT").textContent=x.name+"'s gear";
+  $("#gearSub").textContent=[`Level ${x.deathLevel||x.snap.level}`,x.snap.className||x.cls].filter(Boolean).join(" · ");
+  $("#gearBody").innerHTML=`<div class="weps first"><h4>Weapons${hasSet2?" · set 1"+(g.useAlt?"":" (active)"):""}</h4>${wep(g.weapons[0]||[],0)}${hasSet2?`<h4>Weapons · set 2${g.useAlt?" (active)":""}</h4>${wep(g.weapons[1],1)}`:""}</div>
+    <h4 class="armh">Armor &amp; jewelry</h4><div class="doll"><div class="gcol">${col(LEFT)}</div><div class="gcol">${col(RIGHT)}</div></div>`;
+  $("#gearFoot").textContent=x.sample?"Example data.":!x.gearNames?(Game.ready?"Looking up names…":"Item names come from your game files. Connect your game folder in the Game files panel to see them."):`Names read from your game files ${new Date(x.gearNames.at).toLocaleString()}.`;
+  $("#gearModal").classList.add("open");
+  if((!x.gearNames||x.gearNames.v!==2)&&!x.sample&&Game.ready)Game.resolveChar(x).then(()=>{if($("#gearModal").classList.contains("open"))showGear(id)});
+}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-gear]");if(t)showGear(t.dataset.gear)});
+
+$("#syncLayout").onchange=e=>{S.syncLayout=e.target.value;save();Sync.refresh()};
+
+load();
+$("#syncLayout").value=S.syncLayout||"";
+seedSample();
+route();
+Sync.resume();
+Game.resume();
+</script>
+</body>
+</html>
