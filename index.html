@@ -108,9 +108,6 @@ input[type=checkbox]{accent-color:var(--blood)}
 .syncinfo .note{margin:2px 0}
 .syncbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
 .syncbtns .stack{display:flex;flex-direction:column;gap:6px}
-.steamtip{margin-top:8px;background:#0d0b0a;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--text)}
-.steamtip ol{margin:6px 0 0;padding-left:20px}.steamtip li{margin:3px 0}
-.steamtip code{font-size:12.5px}
 .syncdbg table td:first-child{width:180px}
 .sync code{font-size:12px;background:#0d0b0a;padding:1px 4px;border-radius:3px;color:var(--bone)}
 .syncdbg summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px}
@@ -270,15 +267,6 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
         <h3>Game sync <span class="dot" id="syncDot"></span></h3>
         <p class="note" id="syncStatus">Not connected. Connect your Grim Dawn save folder to track hardcore characters automatically.</p>
         <p class="note">Pick <code>Documents\My Games\Grim Dawn\save</code>, or with Steam Cloud on, <code>Steam\userdata\&lt;your id&gt;\219990\remote\save</code>. Files are only read, never changed or uploaded.</p>
-        <div class="steamtip" id="steamTip" hidden>
-          <b>Steam Cloud saves</b>: the path is copied. In the folder window:
-          <ol>
-            <li>Click the address bar at the top, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
-            <li>Open the numbered folder (your Steam ID), then <b>219990</b> → <b>remote</b>.</li>
-            <li>Select the <b>save</b> folder and click <b>Select Folder</b>.</li>
-          </ol>
-          <span class="note">Path: <code id="steamPath"></code></span>
-        </div>
       </div>
       <div class="syncbtns">
         <div class="stack" id="syncConnectWrap">
@@ -402,6 +390,22 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
     <label for="fLevel">Level</label><input id="fLevel" type="number" min="1" max="100" value="1">
     <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn red" type="submit">Save</button></div>
   </form>
+</div>
+
+<div class="modal" id="steamModal" role="dialog" aria-modal="true" aria-labelledby="steamT">
+  <div class="dlg wide">
+    <h3 id="steamT">Find your Steam Cloud saves</h3>
+    <p>With Steam Cloud on, Grim Dawn keeps saves in Steam's folder instead of Documents. Your browser can't open that folder by itself, so here's how to get there:</p>
+    <ol class="steps">
+      <li>Click <b>Open folder window</b> below. The folder path is copied for you.</li>
+      <li>In the window that opens, click the <b>address bar</b> at the top, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
+      <li>Open the <b>numbered folder</b> (your Steam ID), then <b>219990</b>, then <b>remote</b>.</li>
+      <li>Click the <b>save</b> folder once, then click <b>Select Folder</b>.</li>
+    </ol>
+    <div class="pathrow"><code id="steamPath"></code><button type="button" class="btn sm" id="steamCopy">Copy</button></div>
+    <p class="note" style="margin-top:8px">You only do this once. Next time, this button opens straight in your Steam saves.</p>
+    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="steamOpen">Open folder window</button></div>
+  </div>
 </div>
 
 <div class="modal" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsT">
@@ -1401,7 +1405,6 @@ const Sync=(()=>{
         [...files.keys()].forEach(k=>{if(!keys.has(k))files.delete(k)});
       }
       if(!files.size){busy=false;stop(false);status("No character files in that folder. Pick the save folder, or if you use Steam Cloud, click “Saves in Steam Cloud?”.","warn");return}
-      $("#steamTip").hidden=true;
       let changed=0;
       for(const f of files.values()){
         let file;try{file=await f.h.getFile()}catch(e){continue}
@@ -1503,13 +1506,16 @@ const Sync=(()=>{
 
 $("#syncConnect").onclick=()=>Sync.connect("local");
 const STEAM_PATH="C:\\Program Files (x86)\\Steam\\userdata";
+// Browsers can't open the picker at a path a site chooses, so the first time we explain
+// how to get there; after that the picker reopens in the Steam folder by itself.
 $("#syncSteam").onclick=()=>{
-  const steamKnown=Sync.steamKnown;
-  // Browsers can't open the picker at a path a site chooses. The first time, the path is
-  // copied for pasting; after that the picker reopens in the Steam folder by itself.
-  if(!steamKnown){$("#steamPath").textContent=STEAM_PATH;$("#steamTip").hidden=false;navigator.clipboard&&navigator.clipboard.writeText(STEAM_PATH).catch(()=>{})}
-  Sync.connect("steam");
+  if(Sync.steamKnown){Sync.connect("steam");return}
+  $("#steamPath").textContent=STEAM_PATH;$("#steamModal").classList.add("open");setTimeout(()=>$("#steamOpen").focus(),30);
 };
+const copySteam=()=>navigator.clipboard?navigator.clipboard.writeText(STEAM_PATH).then(()=>true,()=>false):Promise.resolve(false);
+$("#steamCopy").onclick=async()=>toast(await copySteam()?"Path copied":"Select the path and copy it manually");
+// keep the steps on screen behind the folder window, and close them once a folder is picked or the window is cancelled
+$("#steamOpen").onclick=()=>{copySteam();Sync.connect("steam").finally(()=>$("#steamModal").classList.remove("open"))};
 
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
