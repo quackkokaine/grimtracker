@@ -149,3 +149,41 @@ console.log("bad files rejected: ok");
   assert.equal(g.equipment[11], null); assert.equal(g.weapons[0][0].base, "records/items/gearweapons/swords1h/a12_sword.dbr"); assert.equal(g.weapons[0][1], null);
   console.log("equipped gear: ok");
 }
+
+// Game 1.3 layouts seen in real saves: inventory v11 (4 extra numbers per item), stash v6+ with
+// nested pages, skills v8 (one extra flag), and shrine lists paired by difficulty.
+{
+  const w = Writer(90210);
+  w.int(0x58434447); w.int(2); w.wstr("Newer"); w.byte(1); w.str("tagSkillClassName0104"); w.int(16); w.byte(1); w.byte(7);
+  w.next(0); w.int(8); w.uid(new Uint8Array(16));
+  const f32 = f => w.int(new Uint32Array(new Float32Array([f]).buffer)[0]);
+  const item = (base, extra = {}) => { w.str(base); w.str(extra.prefix || ""); w.str(""); w.str(""); w.str(""); w.int(5); w.str(extra.relic || ""); w.str(""); w.int(0); w.str(""); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0); w.int(1); w.int(0); w.int(0); };
+  w.block(3, () => {
+    w.int(11); w.byte(1); w.int(1); w.int(0); w.int(0);
+    w.block(0, () => { w.byte(0); w.int(2); item("records/items/materia/compa_corpsedust.dbr"); w.int(0); w.int(6); item("records/items/materia/compa_aethercrystal.dbr"); w.int(0); w.int(4); });
+    w.byte(0);
+    for (let i = 0; i < 12; i++) { item(i === 0 ? "records/items/gearhead/a03_head002.dbr" : "", i === 0 ? { prefix: "records/items/lootaffixes/prefix/b_ar030_ar.dbr", relic: "records/items/materia/compa_festeringblood.dbr" } : {}); w.byte(1); }
+    w.byte(0); item("records/items/gearweapons/blunt1h/b016a_blunt.dbr"); w.byte(1); item(""); w.byte(0); w.byte(1); item(""); w.byte(0); item(""); w.byte(0);
+  });
+  w.block(4, () => { w.int(11); w.int(1); w.block(0, () => { w.int(10); w.int(18); w.int(0); }); });
+  const sk = (name, lvl) => { w.str(name); w.int(lvl); w.byte(1); w.int(0); w.int(0); w.int(0); w.byte(0); w.byte(0); w.byte(0); w.str(""); w.str(""); };
+  w.block(8, () => { w.int(8); w.int(2); sk("records/skills/playerclass01/_classtraining_class01.dbr", 13); sk("records/skills/playerclass04/_classtraining_class04.dbr", 20); w.int(2); w.int(0); w.int(0); w.int(0); });
+  w.block(17, () => { w.int(2); const L = [[KNOWN[1515], KNOWN[7546]], [KNOWN[1515], KNOWN[7546], KNOWN[1517]], [], [], [], []]; L.forEach(l => { w.int(l.length); l.forEach(h => w.uid(hexToBytes(h))); }); });
+  w.block(16, () => {
+    w.int(11); w.int(5564); w.int(1); for (let i = 0; i < 9; i++) w.int(i); f32(100);
+    for (let d = 0; d < 3; d++) { w.str(""); w.int(0); w.int(0); w.str(""); w.str(""); }
+    w.int(0); f32(0); f32(0); f32(0); for (let i = 0; i < 5; i++) w.int(0); w.int(2); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0); w.int(0);
+    w.int(0); w.int(0); w.int(0); w.byte(0); w.int(0); w.int(0);
+  });
+  const t = GDSave.parse(Uint8Array.from(w.bytes).buffer);
+  assert.equal(t.warnings, undefined, JSON.stringify(t.warnings));
+  const snap = GDSave.snapshot(t);
+  assert.equal(snap.gear.equipment[0].base, "records/items/gearhead/a03_head002.dbr"); assert.equal(snap.gear.equipment[0].relic, "records/items/materia/compa_festeringblood.dbr");
+  assert.equal(snap.gear.weapons[0][0].base, "records/items/gearweapons/blunt1h/b016a_blunt.dbr");
+  assert.deepEqual(snap.masteries.map(m => m.name + m.level), ["Soldier13", "Nightblade20"]); assert.equal(snap.className, "Blademaster");
+  assert.equal(t.stats.deaths, 1); assert.equal(t.stats.shrinesRestored, 2);
+  const r = GDSave.resolve(t, knownMap);
+  assert.deepEqual(r.restored.normal.sort((a, b) => a - b), [1515, 7546]); assert.deepEqual(r.found.normal.sort((a, b) => a - b), [1515, 1517, 7546]);
+  assert.deepEqual(r.restored.elite, []);
+  console.log("game 1.3 save layouts: ok");
+}

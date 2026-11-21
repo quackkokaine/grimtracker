@@ -937,6 +937,7 @@ const Sync=(()=>{
     let save,res;
     try{save=GDSave.parse(buf);res=GDSave.resolve(save,UID_TO_SHRINE,S.syncLayout||"")}
     catch(e){const prev=report.get(folder)||{};report.set(folder,{...prev,folder,ok:false,err:e.message,at:Date.now()});return false} // often a half-written file; try again next tick
+    if(!replaying)keepCopy(folder,buf,mod);
     report.set(folder,{folder,ok:true,at:Date.now(),name:save.name,hc:save.hardcore,level:save.level,tag:save.tag,hv:save.headerVersion,dv:save.dataVersion,blocks:save.blocks.join(","),deaths:save.stats?save.stats.deaths:"?",mod:save.info?save.info.isInMainQuest:"?",dev:save.bio?save.bio.totalDevotion:"?",enc:res.encoding,layout:res.layout,scores:JSON.stringify(res.layoutScores),sizes:res.listSizes.join("/"),unknown:res.unknown,restored:DIFFS.map(([d])=>res.restored[d].length).join("/")});
     if(!save.hardcore)return true; // site is hardcore only
     const dead=!!(save.stats&&save.stats.deaths>0);
@@ -997,18 +998,30 @@ const Sync=(()=>{
     const h=await loadHandle();if(!h){buttons("off");return}
     try{if(await h.requestPermission({mode:"read"})==="granted")await start(h)}catch(e){status("Couldn't reconnect: "+e.message,"warn")}
   }
+  // Copies of the last save files read, kept in this browser so a page refresh doesn't lose them
+  // (and so reader fixes apply to them without reloading). Small: about 20 KB per character.
+  let replaying=false;
+  function keepCopy(folder,buf,mod){idb("readwrite",s=>s.put({folder,mod,buf:buf.slice(0),at:Date.now()},"save:"+folder)).catch(()=>{})}
+  const copies=()=>new Promise(res=>{try{const o=indexedDB.open("gdhc-sync",1);o.onupgradeneeded=()=>o.result.createObjectStore("kv");o.onsuccess=()=>{try{const st=o.result.transaction("kv","readonly").objectStore("kv");const q=st.getAll(IDBKeyRange.bound("save:","save:\uffff"));q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])}catch(e){res([])}};o.onerror=()=>res([])}catch(e){res([])}});
+  async function replay(){
+    const list=await copies();if(!list.length)return 0;
+    replaying=true;let ok=0;try{for(const c of list)if(await ingest(c.folder,c.buf,c.mod))ok++}finally{replaying=false}
+    const newest=Math.max(...list.map(c=>c.at||0));
+    status(`Showing ${ok} saved character file${ok===1?"":"s"} from ${new Date(newest).toLocaleString()}. Connect or load your saves again to update.`,"");
+    render();renderDetails();return ok;
+  }
   async function resume(){
-    if(!canLive){status("Live sync needs Chrome or Edge. You can still use “Load once”.","");buttons("off");return}
+    if(!canLive){buttons("off");await replay();if(!(await copies()).length)status("Live sync needs Chrome or Edge. You can still use “Load once”.","");return}
     const h=await loadHandle().catch(()=>null);
-    if(!h){buttons("off");return}
-    try{const p=await h.queryPermission({mode:"read"});if(p==="granted")await start(h);else{buttons("reconnect");status(`Save folder “${h.name}” remembered. Click Reconnect to resume live sync.`,"warn")}}
+    if(!h){buttons("off");await replay();return}
+    try{const p=await h.queryPermission({mode:"read"});if(p==="granted")await start(h);else{buttons("reconnect");await replay();status(`Save folder “${h.name}” remembered. Click Reconnect to resume live sync.`,"warn")}}
     catch(e){buttons("off")}
   }
   async function loadOnce(fileList){
     const gdc=[...fileList].filter(f=>/\.gdc$/i.test(f.name));
     if(!gdc.length){status("No character files (.gdc) in that folder.","warn");return}
     let ok=0;for(const f of gdc){const folder=(f.webkitRelativePath||f.name).split("/").slice(0,-1).join("/")||f.name;if(await ingest(folder,await f.arrayBuffer(),f.lastModified))ok++}
-    status(`Read ${ok} of ${gdc.length} save files once (${new Date().toLocaleTimeString()}). Load again to refresh.`,ok?"":"warn");
+    status(ok?`Read ${ok} of ${gdc.length} save files (${new Date().toLocaleTimeString()}). They stay here after a refresh; load again after you play to update.`:`Couldn't read any of the ${gdc.length} save files. Open Sync details below for the reason.`,ok===gdc.length?"":"warn");
     render();renderDetails();
   }
   return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true)};

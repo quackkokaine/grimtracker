@@ -62,27 +62,49 @@ const GDSave = (() => {
       out.bio = { version: v, level: r.int(), experience: r.int(), attributePoints: r.int(), skillPoints: r.int(), devotionPoints: r.int(), totalDevotion: r.int(),
         physique: r.float(), cunning: r.float(), spirit: r.float(), health: r.float(), energy: r.float() };
     } else if (id === 3) {
+      // Inventory. Bags are nested blocks, so this block can't be skipped byte by byte.
+      // Item layout depends on the block version: newer saves (v11 seen in game 1.3) carry
+      // four extra numbers per item. Try the layouts and keep the one that lands exactly on the block end.
       const v = r.int(); const has = r.byte();
       if (!has) return;
       const sacks = r.int(); r.int(); r.int();
       if (sacks > 100) throw new Error("bad sack count");
-      for (let i = 0; i < sacks; i++) { r.int(); const len = r.next(); r.skipTo(r.pos + len); r.next(); } // bags: not needed
-      const item = () => {
-        const it = { base: r.str(), prefix: r.str(), suffix: r.str(), modifier: r.str(), transmute: r.str() };
-        it.seed = r.int(); it.relic = r.str(); it.relicBonus = r.str(); r.int(); it.augment = r.str(); r.int(); r.int(); it.relicLevel = r.int(); it.stack = r.int();
-        it.attached = r.byte(); return it;
-      };
-      const useAlt = r.byte(); const equipment = [];
-      for (let i = 0; i < 12; i++) { guard(r, end); equipment.push(item()); }
-      const sets = [];
-      for (let s = 0; s < 2; s++) { r.byte(); sets.push([item(), item()]); }
-      out.gear = { version: v, useAlt: !!useAlt, equipment, weapons: sets };
+      for (let i = 0; i < sacks; i++) { r.int(); const len = r.next(); r.skipTo(r.pos + len); r.next(); }
+      const afterBags = r.snap();
+      const layouts = v >= 11 ? [4, 0] : [0, 4];
+      let lastErr;
+      for (const extra of layouts) {
+        r.restore(afterBags);
+        try {
+          const item = () => {
+            const it = { base: r.str(), prefix: r.str(), suffix: r.str(), modifier: r.str(), transmute: r.str() };
+            it.seed = r.int(); it.relic = r.str(); it.relicBonus = r.str(); r.int(); it.augment = r.str(); r.int(); r.int(); it.relicLevel = r.int();
+            for (let k = 0; k < extra; k++) r.int();
+            it.stack = r.int(); it.attached = r.byte(); return it;
+          };
+          const useAlt = r.byte(); const equipment = [];
+          for (let i = 0; i < 12; i++) { guard(r, end); equipment.push(item()); }
+          const sets = [];
+          for (let s = 0; s < 2; s++) { r.byte(); sets.push([item(), item()]); }
+          if (r.pos !== end) throw new Error("item layout mismatch");
+          out.gear = { version: v, useAlt: !!useAlt, equipment, weapons: sets };
+          return;
+        } catch (e) { lastErr = e; }
+      }
+      r.restore(afterBags); r.skipTo(end); // equipment has no nested blocks, so this skip is safe
+      (out.warnings = out.warnings || []).push("block 3: gear not read (" + lastErr.message + ")");
+    } else if (id === 4) {
+      // Personal stash: from version 6 its pages are nested blocks, which must be stepped over one by one.
+      const v = r.int();
+      if (v >= 6) { const pages = r.int(); if (pages > 100) throw new Error("bad stash page count"); for (let i = 0; i < pages; i++) { r.int(); const len = r.next(); r.skipTo(r.pos + len); r.next(); } }
+      r.skipTo(end);
     } else if (id === 8) {
       const v = r.int(); const n = r.int(); if (n > 2000) throw new Error("bad skill count");
       const skills = [];
       for (let i = 0; i < n; i++) {
         guard(r, end);
         const s = { name: r.str(), level: r.int(), enabled: r.byte(), devotionLevel: r.int(), devotionExp: r.int(), sublevel: r.int(), active: r.byte(), transition: r.byte() };
+        if (v >= 8) r.byte(); // newer saves add one more flag per skill
         r.str(); r.str(); skills.push(s);
       }
       out.skills = { version: v, list: skills, masteriesAllowed: r.int() };
@@ -203,6 +225,7 @@ const GDSave = (() => {
 
   /* known: Map(uidHex -> shrineId). Returns per-difficulty restored/found arrays of shrine ids. */
   function resolve(save, known, forceLayout) {
+    const restoredStat = save.stats && save.stats.complete ? save.stats.shrinesRestored : null;
     const lists = save.shrineLists || [[], [], [], [], [], []];
     let enc = "bytes", best = -1;
     for (const [name, fn] of Object.entries(ENCODINGS)) {
@@ -217,13 +240,15 @@ const GDSave = (() => {
       return s;
     });
     // pick the layout where "restored" is always inside "found" (fewest violations)
+    // Real saves (game 1.3) pair the lists by difficulty. Score each layout: "restored" must sit inside
+    // "found", and the restored total should match the save's own shrines-restored counter.
     let layout = forceLayout && LAYOUTS[forceLayout] ? forceLayout : null, scores = {};
     for (const [k, L] of Object.entries(LAYOUTS)) {
-      let bad = 0;
-      for (let d = 0; d < 3; d++) sets[L.restored[d]].forEach(id => { if (!sets[L.found[d]].has(id)) bad++; });
-      scores[k] = bad;
+      let bad = 0, total = 0;
+      for (let d = 0; d < 3; d++) { sets[L.restored[d]].forEach(id => { if (!sets[L.found[d]].has(id)) bad++; }); total += lists[L.restored[d]].length; }
+      scores[k] = bad * 1000 + (restoredStat != null ? Math.abs(total - restoredStat) : 0);
     }
-    if (!layout) layout = Object.keys(scores).reduce((a, b) => scores[b] < scores[a] ? b : a, "A");
+    if (!layout) layout = ["D", "C", "A", "B"].reduce((a, b) => scores[b] < scores[a] ? b : a, "D");
     const L = LAYOUTS[layout];
     const D = ["normal", "elite", "ultimate"];
     const restored = {}, found = {};
