@@ -212,8 +212,9 @@ const GDDB = (() => {
 
   /* files: array of {path, file}. Expansion databases override the base game. */
   async function openGame(files) {
-    const byPath = p => files.filter(f => p.test(f.path.replace(/\\/g, "/")));
-    const order = f => { const m = f.path.match(/gdx(\d+)/i); return m ? +m[1] : 0; };
+    // skip mods and backups; base game first, then Crucible, then expansions in order (later ones override)
+    const byPath = p => files.filter(f => { const q = f.path.replace(/\\/g, "/"); return p.test(q) && !/(^|\/)(mods|save|settings)\//i.test(q); });
+    const order = f => { const m = f.path.match(/gdx(\d+)/i); if (m) return 10 + +m[1]; return /survivalmode/i.test(f.path) ? 1 : 0; };
     const arzFiles = byPath(/(^|\/)database\/[^/]+\.arz$/i).sort((a, b) => order(a) - order(b));
     const textFiles = byPath(/(^|\/)resources\/text_en\.arc$/i).sort((a, b) => order(a) - order(b));
     if (!arzFiles.length) throw new Error("No game database found. Pick your Grim Dawn install folder (the one with Grim Dawn.exe).");

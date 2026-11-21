@@ -162,7 +162,8 @@ input[type=checkbox]{accent-color:var(--blood)}
 .grave:hover .trash{opacity:.55}
 .grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#e05a4f}
 .grave .tag.example{position:absolute;top:18px;left:18px;color:var(--muted);border-color:#4a3e35}
-.dlg.wide{max-width:560px}
+.dlg.wide{max-width:600px;max-height:calc(100vh - 40px);overflow:auto}
+.opth{font-family:Cinzel;font-size:14px;color:var(--bone);margin:14px 0 4px;letter-spacing:.04em}
 .gamerow{border-top:1px solid var(--line2);margin-top:12px;padding-top:12px}
 .sync h3 .opt{font-family:"Alegreya Sans";font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .doll{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
@@ -281,12 +282,14 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
     <div class="syncmain gamerow">
       <div class="syncinfo">
         <h3>Game files <span class="dot" id="gameDot"></span> <span class="opt">optional</span></h3>
-        <p class="note" id="gameStatus">Connect your Grim Dawn install folder (the one with <code>Grim Dawn.exe</code>) to see the names of each character's gear.</p>
+        <p class="note" id="gameStatus">Connect your Grim Dawn install folder (the one with <code>Grim Dawn.exe</code>) to see each character's gear.</p>
+        <p class="note">Installed under <code>Program Files</code> (the Steam default)? Browsers block live access there, so use <b>Load once</b> and pick <code>Steam\steamapps\common\Grim Dawn</code>. Gear already looked up stays on each grave.</p>
       </div>
       <div class="syncbtns">
         <button class="btn" id="gameConnect">Connect game folder</button>
         <button class="btn" id="gameReconnect" hidden>Reconnect</button>
         <button class="btn ghost" id="gameStop" hidden>Disconnect</button>
+        <label class="btn ghost" id="gameOnceLbl" title="Reads the game files once. Use this if your game is installed under Program Files (most Steam installs).">Load once<input type="file" id="gameOnce" webkitdirectory multiple hidden></label>
       </div>
     </div>
     <details class="syncdbg"><summary>Sync details</summary>
@@ -394,17 +397,25 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
 
 <div class="modal" id="steamModal" role="dialog" aria-modal="true" aria-labelledby="steamT">
   <div class="dlg wide">
-    <h3 id="steamT">Find your Steam Cloud saves</h3>
-    <p>With Steam Cloud on, Grim Dawn keeps saves in Steam's folder instead of Documents. Your browser can't open that folder by itself, so here's how to get there:</p>
+    <h3 id="steamT">Steam Cloud saves</h3>
+    <p>With Steam Cloud on, Grim Dawn keeps saves inside <code>Program Files</code>. Chrome and Edge won't let websites keep a live connection to anything in Program Files (a safety rule), so there are two ways to go:</p>
+    <h4 class="opth">Option 1 · Read your saves now</h4>
     <ol class="steps">
-      <li>Click <b>Open folder window</b> below. The folder path is copied for you.</li>
-      <li>In the window that opens, click the <b>address bar</b> at the top, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
+      <li>Click <b>Read Steam saves</b>. The folder path is copied for you.</li>
+      <li>In the folder window, click the <b>address bar</b>, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
       <li>Open the <b>numbered folder</b> (your Steam ID), then <b>219990</b>, then <b>remote</b>.</li>
-      <li>Click the <b>save</b> folder once, then click <b>Select Folder</b>.</li>
+      <li>Click the <b>save</b> folder once, then <b>Upload</b>. Your browser calls it uploading, but the files stay on your computer.</li>
     </ol>
+    <p class="note">This reads your saves once. Do it again after you play to update.</p>
     <div class="pathrow"><code id="steamPath"></code><button type="button" class="btn sm" id="steamCopy">Copy</button></div>
-    <p class="note" style="margin-top:8px">You only do this once. Next time, this button opens straight in your Steam saves.</p>
-    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="steamOpen">Open folder window</button></div>
+    <h4 class="opth">Option 2 · Live sync (switch to local saves)</h4>
+    <ol class="steps">
+      <li>Back up the Steam <code>save</code> folder above (copy it somewhere safe).</li>
+      <li>In Grim Dawn, open <b>Options</b> and turn off <b>Cloud Saving</b>, then exit the game and Steam.</li>
+      <li>Copy that <code>save</code> folder into <code>Documents\My Games\Grim Dawn</code>.</li>
+      <li>Start the game to check your characters are there, then use <b>Connect save folder</b> here.</li>
+    </ol>
+    <div class="acts"><button type="button" class="btn ghost" data-close>Close</button><button type="button" class="btn red" id="steamOpen">Read Steam saves</button></div>
   </div>
 </div>
 
@@ -921,6 +932,8 @@ const Sync=(()=>{
 
   // returns true when the file was read cleanly
   async function ingest(folder,buf,mod){
+    // same character, same key, whichever folder level was picked or however it was read (live or once)
+    folder=folder.replace(/\\/g,"/").split("/").filter(Boolean).slice(-2).join("/");
     let save,res;
     try{save=GDSave.parse(buf);res=GDSave.resolve(save,UID_TO_SHRINE,S.syncLayout||"")}
     catch(e){const prev=report.get(folder)||{};report.set(folder,{...prev,folder,ok:false,err:e.message,at:Date.now()});return false} // often a half-written file; try again next tick
@@ -965,18 +978,17 @@ const Sync=(()=>{
   }
   function stop(keepHandle){dir=null;clearInterval(timer);timer=null;files.clear();if(!keepHandle)saveHandle(null);buttons("off");status("Not connected.","")}
 
-  let steamDir=null;idb("readonly",s=>s.get("steamdir")).then(h=>{steamDir=h||null}).catch(()=>{});
   // Each button keeps its own last-used folder: the local button starts in Documents,
   // the Steam button reopens wherever Steam saves were last picked.
   async function connect(kind){
     try{
       const steam=kind==="steam";
       const opts={id:steam?"gd-steam":"gd-local",mode:"read"};
-      const prev=steam?steamDir:null; // loaded up front: waiting here could cost the click's permission to open the picker
+      const prev=null;
       opts.startIn=prev||(steam?undefined:"documents");
       if(!opts.startIn)delete opts.startIn;
       const h=await window.showDirectoryPicker(opts);
-      saveHandle(h);if(steam){steamDir=h;idb("readwrite",s=>s.put(h,"steamdir")).catch(()=>{})}
+      saveHandle(h);
       await start(h);
     }
     catch(e){if(e&&e.name!=="AbortError")status("Couldn't open the folder: "+e.message,"warn")}
@@ -999,21 +1011,17 @@ const Sync=(()=>{
     status(`Read ${ok} of ${gdc.length} save files once (${new Date().toLocaleTimeString()}). Load again to refresh.`,ok?"":"warn");
     render();renderDetails();
   }
-  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true),hasSteam:()=>idb("readonly",s=>s.get("steamdir")).then(Boolean).catch(()=>false),get steamKnown(){return!!steamDir}};
+  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true)};
 })();
 
 $("#syncConnect").onclick=()=>Sync.connect("local");
 const STEAM_PATH="C:\\Program Files (x86)\\Steam\\userdata";
-// Browsers can't open the picker at a path a site chooses, so the first time we explain
-// how to get there; after that the picker reopens in the Steam folder by itself.
-$("#syncSteam").onclick=()=>{
-  if(Sync.steamKnown){Sync.connect("steam");return}
-  $("#steamPath").textContent=STEAM_PATH;$("#steamModal").classList.add("open");setTimeout(()=>$("#steamOpen").focus(),30);
-};
+// Steam keeps saves in Program Files, which browsers block for live folder access,
+// so this reads them through the classic folder upload input instead (stays on the computer).
+$("#syncSteam").onclick=()=>{$("#steamPath").textContent=STEAM_PATH;$("#steamModal").classList.add("open");setTimeout(()=>$("#steamOpen").focus(),30)};
 const copySteam=()=>navigator.clipboard?navigator.clipboard.writeText(STEAM_PATH).then(()=>true,()=>false):Promise.resolve(false);
 $("#steamCopy").onclick=async()=>toast(await copySteam()?"Path copied":"Select the path and copy it manually");
-// keep the steps on screen behind the folder window, and close them once a folder is picked or the window is cancelled
-$("#steamOpen").onclick=()=>{copySteam();Sync.connect("steam").finally(()=>$("#steamModal").classList.remove("open"))};
+$("#steamOpen").onclick=()=>{copySteam();$("#steamModal").classList.remove("open");$("#syncOnce").click()};
 
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
@@ -1036,7 +1044,7 @@ const Game=(()=>{
         const low=n.toLowerCase();
         if(low==="database"){for await(const [fn,fh] of h.entries())if(fh.kind==="file"&&/\.arz$/i.test(fn))out.push({path:prefix+n+"/"+fn,file:await fh.getFile()})}
         else if(low==="resources"){for await(const [fn,fh] of h.entries())if(fh.kind==="file"&&/^text_en\.arc$/i.test(fn))out.push({path:prefix+n+"/"+fn,file:await fh.getFile()})}
-        else if(/^gdx\d+$/.test(low))await grab(h,prefix+n+"/");
+        else if(/^(gdx|survivalmode)\d+$/.test(low))await grab(h,prefix+n+"/");
       }
     }
     await grab(dir,"");
@@ -1072,11 +1080,20 @@ const Game=(()=>{
     for(const c of S.chars)if(c.snap&&c.snap.gear&&!c.sample&&(c.status!=="fallen"||!c.gearNames||c.gearNames.v!==2))await resolveChar(c);
     render();
   }
-  return{connect,reconnect,resume,stop,resolveChar,get ready(){return!!game}};
+  // fallback for installs the browser won't connect to live (e.g. Program Files)
+  async function loadOnce(list){
+    const want=/(^|\/)(database\/[^/]+\.arz|resources\/text_en\.arc)$/i;
+    const files=[...list].filter(f=>want.test(f.webkitRelativePath||f.name)).map(f=>({path:f.webkitRelativePath||f.name,file:f}));
+    try{status("Reading game files…","live");game=await GDDB.openGame(files);buttons("on");
+      status(`Loaded once · ${game.dbs.length} item database${game.dbs.length>1?"s":""} · ${game.textCount.toLocaleString()} text entries. Load again after a game update.`,"live");await resolveAll()}
+    catch(e){game=null;buttons("off");status("Couldn't read the game files: "+esc(e.message),"warn")}
+  }
+  return{connect,reconnect,resume,stop,resolveChar,loadOnce,get ready(){return!!game}};
 })();
 $("#gameConnect").onclick=()=>Game.connect();
 $("#gameReconnect").onclick=()=>Game.reconnect();
 $("#gameStop").onclick=()=>Game.stop();
+$("#gameOnce").onchange=e=>{Game.loadOnce(e.target.files);e.target.value=""};
 
 const SLOT_NAMES=["Head","Amulet","Chest","Legs","Feet","Hands","Ring","Ring","Belt","Shoulders","Medal","Relic"];
 const SLOT_BY_CLASS=[[/_head$/i,"Head"],[/_shoulders$/i,"Shoulders"],[/_chest$/i,"Chest"],[/_hands$/i,"Hands"],[/_legs$/i,"Legs"],[/_feet$/i,"Feet"],[/_waist$/i,"Belt"],[/amulet$/i,"Amulet"],[/ring$/i,"Ring"],[/medal$/i,"Medal"],[/relic$/i,"Relic"]];
