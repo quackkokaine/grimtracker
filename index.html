@@ -1464,8 +1464,20 @@ const Sync=(()=>{
   }
   function stop(keepHandle){dir=null;clearInterval(timer);timer=null;files.clear();if(!keepHandle)saveHandle(null);buttons("off");status("Not connected.","")}
 
-  async function connect(){
-    try{const h=await window.showDirectoryPicker({id:"gd-save",mode:"read"});saveHandle(h);await start(h)}
+  let steamDir=null;idb("readonly",s=>s.get("steamdir")).then(h=>{steamDir=h||null}).catch(()=>{});
+  // Each button keeps its own last-used folder: the local button starts in Documents,
+  // the Steam button reopens wherever Steam saves were last picked.
+  async function connect(kind){
+    try{
+      const steam=kind==="steam";
+      const opts={id:steam?"gd-steam":"gd-local",mode:"read"};
+      const prev=steam?steamDir:null; // loaded up front: waiting here could cost the click's permission to open the picker
+      opts.startIn=prev||(steam?undefined:"documents");
+      if(!opts.startIn)delete opts.startIn;
+      const h=await window.showDirectoryPicker(opts);
+      saveHandle(h);if(steam){steamDir=h;idb("readwrite",s=>s.put(h,"steamdir")).catch(()=>{})}
+      await start(h);
+    }
     catch(e){if(e&&e.name!=="AbortError")status("Couldn't open the folder: "+e.message,"warn")}
   }
   async function reconnect(){
@@ -1486,16 +1498,19 @@ const Sync=(()=>{
     status(`Read ${ok} of ${gdc.length} save files once (${new Date().toLocaleTimeString()}). Load again to refresh.`,ok?"":"warn");
     render();renderDetails();
   }
-  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true)};
+  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true),hasSteam:()=>idb("readonly",s=>s.get("steamdir")).then(Boolean).catch(()=>false),get steamKnown(){return!!steamDir}};
 })();
 
-$("#syncConnect").onclick=()=>Sync.connect();
+$("#syncConnect").onclick=()=>Sync.connect("local");
 const STEAM_PATH="C:\\Program Files (x86)\\Steam\\userdata";
-$("#syncSteam").onclick=async()=>{
-  $("#steamPath").textContent=STEAM_PATH;$("#steamTip").hidden=false;
-  try{await navigator.clipboard.writeText(STEAM_PATH)}catch(e){}
-  Sync.connect(); // browsers can't open the picker at a custom path, so the path is pasted into it
+$("#syncSteam").onclick=()=>{
+  const steamKnown=Sync.steamKnown;
+  // Browsers can't open the picker at a path a site chooses. The first time, the path is
+  // copied for pasting; after that the picker reopens in the Steam folder by itself.
+  if(!steamKnown){$("#steamPath").textContent=STEAM_PATH;$("#steamTip").hidden=false;navigator.clipboard&&navigator.clipboard.writeText(STEAM_PATH).catch(()=>{})}
+  Sync.connect("steam");
 };
+
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
 $("#syncOnce").onchange=e=>{Sync.loadOnce(e.target.files);e.target.value=""};
