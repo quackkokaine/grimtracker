@@ -163,6 +163,11 @@ input[type=checkbox]{accent-color:var(--blood)}
 .grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#e05a4f}
 .grave .tag.example{position:absolute;top:18px;left:18px;color:var(--muted);border-color:#4a3e35}
 .dlg.wide{max-width:600px;max-height:calc(100vh - 40px);overflow:auto}
+.trust{margin:4px 0 10px;padding-left:20px}
+.dlg .chkrow{display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:14px;letter-spacing:0;color:var(--muted);cursor:pointer}
+.dlg .chkrow input{width:auto;margin:0}
+.trust li{margin:8px 0;line-height:1.5}
+.trust b{color:var(--bone)}
 .opth{font-family:Cinzel;font-size:14px;color:var(--bone);margin:14px 0 4px;letter-spacing:.04em}
 .gamerow{border-top:1px solid var(--line2);margin-top:12px;padding-top:12px}
 .sync h3 .opt{font-family:"Alegreya Sans";font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
@@ -395,6 +400,23 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
   </form>
 </div>
 
+<div class="modal" id="trustModal" role="dialog" aria-modal="true" aria-labelledby="trustT">
+  <div class="dlg wide">
+    <h3 id="trustT">Your saves are safe</h3>
+    <p>Before you pick your save folder, here's exactly what this site does with it:</p>
+    <ul class="trust">
+      <li><b>Read-only.</b> The site only asks your browser for permission to <i>view</i> files. Your browser enforces that, so the site can't change, move, overwrite or delete anything in your saves.</li>
+      <li><b>Nothing leaves your computer.</b> There is no server behind this site. Your files are read right here in this page and are never uploaded, sent or shared with anyone, including whoever runs the site.</li>
+      <li><b>Only character files are read.</b> It looks for each character's <code>player.gdc</code> and reads the name, level, class, shrines, stats and gear. Everything else in the folder is ignored.</li>
+      <li><b>Stored in your browser only.</b> Your progress, plus a small copy (about 20 KB) of each character file, is kept in this browser so it's still here after a refresh. Clearing your browser data removes it.</li>
+      <li><b>You stay in control.</b> Disconnect any time with the button here, or remove the site's access in your browser's site settings.</li>
+    </ul>
+    <p class="note">Next, your browser will ask something like <i>“Let this site view files?”</i>. That's the read-only permission described above.</p>
+    <label class="chkrow"><input type="checkbox" id="trustSkip"> Don't show this again</label>
+    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="trustGo">Continue to folder picker</button></div>
+  </div>
+</div>
+
 <div class="modal" id="steamModal" role="dialog" aria-modal="true" aria-labelledby="steamT">
   <div class="dlg wide">
     <h3 id="steamT">Steam Cloud saves</h3>
@@ -406,7 +428,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <li>Open the <b>numbered folder</b> (your Steam ID), then <b>219990</b>, then <b>remote</b>.</li>
       <li>Click the <b>save</b> folder once, then <b>Upload</b>. Your browser calls it uploading, but the files stay on your computer.</li>
     </ol>
-    <p class="note">This reads your saves once. Do it again after you play to update.</p>
+    <p class="note">This reads your saves once. Do it again after you play to update. Files are only viewed, never changed or sent anywhere.</p>
     <div class="pathrow"><code id="steamPath"></code><button type="button" class="btn sm" id="steamCopy">Copy</button></div>
     <h4 class="opth">Option 2 · Live sync (switch to local saves)</h4>
     <ol class="steps">
@@ -1555,7 +1577,15 @@ const Sync=(()=>{
   return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true)};
 })();
 
-$("#syncConnect").onclick=()=>Sync.connect("local");
+// explain read-only, local-only access before the browser's folder picker appears
+$("#syncConnect").onclick=()=>{
+  if(S.skipTrust){Sync.connect("local");return}
+  $("#trustSkip").checked=false;$("#trustModal").classList.add("open");setTimeout(()=>$("#trustGo").focus(),30);
+};
+$("#trustGo").onclick=()=>{
+  if($("#trustSkip").checked){S.skipTrust=true;save()}
+  $("#trustModal").classList.remove("open");Sync.connect("local");
+};
 const STEAM_PATH="C:\\Program Files (x86)\\Steam\\userdata";
 // Steam keeps saves in Program Files, which browsers block for live folder access,
 // so this reads them through the classic folder upload input instead (stays on the computer).
