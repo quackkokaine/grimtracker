@@ -195,22 +195,28 @@ input[type=checkbox]{accent-color:var(--blood)}
 @media (max-width:560px){.hallhead h2{font-size:24px}.hallhead h2::before,.hallhead h2::after{margin:0 8px;font-size:20px}}
 .graves{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),440px));justify-content:center;gap:22px 18px}
 .grave{position:relative;container-type:inline-size;aspect-ratio:680/1020;background:url(assets/grave.webp) center/contain no-repeat;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55));text-align:center}
-.grave .gface{position:absolute;left:18.5%;right:18%;top:44%;bottom:16.3%;display:flex;flex-direction:column;align-items:center;gap:.9cqw;overflow:hidden;padding:2.2cqw 2cqw 2cqw;border-radius:2.4cqw;
+.grave .gface{position:absolute;left:18.5%;right:18%;top:44%;bottom:13.4%;display:flex;flex-direction:column;align-items:center;gap:.55cqw;overflow:hidden;padding:1.6cqw 2cqw 1.8cqw;border-radius:2.4cqw;
   /* dark, slightly blurred plate so text reads cleanly over the cracked stone */
   background:linear-gradient(rgba(12,12,14,.72),rgba(12,12,14,.82));box-shadow:inset 0 0 0 1px rgba(200,100,42,.28),0 0 2.5cqw rgba(0,0,0,.5);backdrop-filter:blur(2px)}
 .grave .gface>*{flex-shrink:0}
-.grave .gn{font-family:Cinzel;font-weight:700;font-size:6cqw;line-height:1.1;color:#fff7ec;letter-spacing:.02em;text-shadow:0 2px 3px #000,0 0 10px rgba(0,0,0,.8);word-break:break-word;max-width:100%}
+.grave .gn{font-family:Cinzel;font-weight:700;font-size:5.5cqw;line-height:1.1;color:#fff7ec;letter-spacing:.02em;text-shadow:0 2px 3px #000,0 0 10px rgba(0,0,0,.8);word-break:break-word;max-width:100%}
 .grave .gn.long{font-size:4.6cqw}
 .grave .gl{font-size:3.5cqw;font-weight:600;color:#ece8e1;text-shadow:0 1px 2px #000}
 .grave .gd{font-size:3.1cqw;color:#c9c6c0;text-shadow:0 1px 2px #000}
-.grave .gs{display:grid;grid-template-columns:repeat(4,1fr);width:100%;gap:1cqw;margin:.6cqw 0;padding:1.2cqw 0;border-top:1px solid rgba(200,100,42,.45);border-bottom:1px solid rgba(200,100,42,.45)}
-.grave .gs b{display:block;font-family:Cinzel;font-size:4.6cqw;font-weight:700;color:#fff7ec;text-shadow:0 1px 2px #000;line-height:1.1}
+.grave .gs{display:grid;grid-template-columns:repeat(3,1fr);width:100%;gap:1cqw;margin:.2cqw 0;padding:.7cqw 0;border-top:1px solid rgba(200,100,42,.45);border-bottom:1px solid rgba(200,100,42,.45)}
+.grave .gs b{display:block;font-family:Cinzel;font-size:4.1cqw;font-weight:700;color:#fff7ec;text-shadow:0 1px 2px #000;line-height:1.1}
 .grave .gs span{font-size:2.5cqw;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#cfccc6;text-shadow:0 1px 2px #000}
-.grave .ep{font-style:italic;font-size:3.4cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.3;cursor:text;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
+.grave .mast.gm{justify-content:center;gap:1.4cqw;margin:0}
+.grave .mast.gm span{font-size:3cqw;padding:.3cqw 1.8cqw;border-radius:1cqw;gap:1cqw;text-shadow:0 1px 2px #000}
+.grave .mast.gm span i{font-size:2.6cqw}
+.grave .gk{font-size:3.1cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.25;max-width:100%}
+.grave .gk span{font-size:2.5cqw;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#d98a52;margin-right:.6cqw}
+.grave .gk i{font-style:normal;color:#bdb9b2;font-size:2.7cqw}
+.grave .ep{font-style:italic;font-size:3.4cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.3;cursor:text;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
 .grave .ep.noep{color:#c2bfb9}
 .grave .ep input{width:100%;background:rgba(15,16,18,.85);border:1px solid var(--blood);border-radius:5px;padding:1cqw 1.6cqw;font-size:3.3cqw;font-style:normal;text-align:center;color:var(--text)}
-.grave .gact{display:flex;flex-wrap:wrap;justify-content:center;gap:1.2cqw;margin-top:auto}
-.grave .gact .btn{font-size:3.1cqw;font-weight:600;padding:.9cqw 2.2cqw;background:rgba(30,31,34,.95);border-color:rgba(200,100,42,.75);color:#f1ece4;border-radius:5px}
+.grave .gact{display:flex;flex-wrap:wrap;justify-content:center;gap:1cqw;margin-top:auto;padding-top:.4cqw}
+.grave .gact .btn{font-size:2.9cqw;font-weight:600;padding:.7cqw 2cqw;background:rgba(30,31,34,.95);border-color:rgba(200,100,42,.75);color:#f1ece4;border-radius:5px}
 .grave .gact .btn:hover{background:rgba(122,52,18,.85);border-color:var(--ember)}
 .grave .trash{position:absolute;top:36%;left:21.5%;background:rgba(14,15,17,.6);border:0;color:#d9d6d0;opacity:.45;cursor:pointer;padding:1.4cqw;border-radius:6px;line-height:0;transition:opacity .15s,color .15s}
 .grave .trash svg{width:3.8cqw;height:3.8cqw}
@@ -1322,7 +1328,9 @@ function renderHall(){
   $("#hallStats").innerHTML=[["Fallen",dead.length],["Highest level reached",top||"–"],["Average level at death",avg||"–"],["Still alive",alive]]
     .map(([l,v])=>`<div class="card stat"><div class="label">${l}</div><div class="val">${v}</div></div>`).join("");
   $("#graves").innerHTML=dead.length?dead.map(x=>{
-    const dev=devo(x).total;
+    const pdl=x.snap&&x.snap.stats&&x.snap.stats.perDifficulty||[];
+    const gkr=pdl.filter(p=>p&&p.greatestMonster).sort((a,b)=>(b.greatestMonsterLevel||0)-(a.greatestMonsterLevel||0))[0];
+    const gk=gkr?{name:nameOf(x,gkr.greatestMonster),lvl:gkr.greatestMonsterLevel}:null;
     const when=x.diedAt?new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Unknown date";
     const cls=(x.snap&&x.snap.className)||(x.cls||"").replace(/\s*\(.*\)$/,"")||(x.tag?x.tag.replace(/^tag/i,""):"");
     return `<article class="grave" data-gid="${x.id}">
@@ -1332,8 +1340,10 @@ function renderHall(){
       <div class="gn${x.name.length>14?" long":""}">${esc(x.name)}</div>
       <div class="gl">Level ${lvl(x)}${cls?" · "+esc(cls):""}</div>
       <div class="gd">Fell ${when}</div>
-      <div class="gs"><div><b>${shrineCount(x,"normal")}</b><span>Normal</span></div><div><b>${shrineCount(x,"elite")}</b><span>Elite</span></div><div><b>${shrineCount(x,"ultimate")}</b><span>Ultimate</span></div><div><b>${dev}</b><span>Devotion</span></div></div>
-      <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="Click to edit">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Killed by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
+      <div class="gs"><div><b>${shrineCount(x,"normal")}</b><span>Normal</span></div><div><b>${shrineCount(x,"elite")}</b><span>Elite</span></div><div><b>${shrineCount(x,"ultimate")}</b><span>Ultimate</span></div></div>
+      ${x.snap&&x.snap.masteries&&x.snap.masteries.length?mastChips(x.snap.masteries,false).replace('class="mast"','class="mast gm"'):""}
+      ${gk?`<div class="gk"><span>Greatest kill</span> ${esc(gk.name)}${gk.lvl?` <i>lvl ${gk.lvl}</i>`:""}</div>`:""}
+      <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="${x.cause?esc(x.cause)+" (click to edit)":"Click to edit"}">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Killed by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
       <div class="gact">${x.snap?`<button class="btn sm" data-stats="${x.id}">View stats</button>`:""}${x.snap&&x.snap.gear?`<button class="btn sm" data-gear="${x.id}">View gear</button>`:""}${x.buildUrl?`<a class="btn sm" href="${esc(x.buildUrl)}" target="_blank" rel="noopener">View build ↗</a><button class="btn sm ghost" data-build="${x.id}" title="Change build link" aria-label="Change build link">✎</button>`:`<button class="btn sm" data-build="${x.id}">Build on Grimtools</button>`}</div>
       </div>
     </article>`}).join(""):`<div class="card empty">No one has fallen. Yet.</div>`;
