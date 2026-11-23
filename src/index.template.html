@@ -212,17 +212,19 @@ input[type=checkbox]{accent-color:var(--blood)}
 .grave .mast.gm span i{font-size:2.6cqw}
 .grave .gk{font-size:3.1cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.25;max-width:100%}
 .grave .gk span{font-size:2.5cqw;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#d98a52;margin-right:.6cqw}
-.grave .gk i{font-style:normal;color:#bdb9b2;font-size:2.7cqw}
+.grave .gk i{white-space:nowrap;font-style:normal;color:#bdb9b2;font-size:2.7cqw}
 .grave .ep{font-style:italic;font-size:3.4cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.3;cursor:text;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
 .grave .ep.noep{color:#c2bfb9}
 .grave .ep input{width:100%;background:rgba(15,16,18,.85);border:1px solid var(--blood);border-radius:5px;padding:1cqw 1.6cqw;font-size:3.3cqw;font-style:normal;text-align:center;color:var(--text)}
 .grave .gact{display:flex;flex-wrap:wrap;justify-content:center;gap:1cqw;margin-top:auto;padding-top:.4cqw}
 .grave .gact .btn{font-size:2.9cqw;font-weight:600;padding:.7cqw 2cqw;background:rgba(30,31,34,.95);border-color:rgba(200,100,42,.75);color:#f1ece4;border-radius:5px}
 .grave .gact .btn:hover{background:rgba(122,52,18,.85);border-color:var(--ember)}
-.grave .trash{position:absolute;top:36%;left:21.5%;background:rgba(14,15,17,.6);border:0;color:#d9d6d0;opacity:.45;cursor:pointer;padding:1.4cqw;border-radius:6px;line-height:0;transition:opacity .15s,color .15s}
-.grave .trash svg{width:3.8cqw;height:3.8cqw}
-.grave:hover .trash{opacity:.65}
-.grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#ff7a5c}
+.grave .trash{position:absolute;bottom:4.2%;left:9.5%;background:rgba(14,15,17,.7);border:1px solid rgba(200,100,42,.35);color:#e2ddd5;opacity:.6;cursor:pointer;padding:1.3cqw;border-radius:7px;line-height:0;transition:opacity .15s,color .15s,border-color .15s;z-index:2}
+.grave .trash svg{width:5.4cqw;height:5.4cqw}
+.grave:hover .trash{opacity:.8}
+.grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#ffb27a;border-color:var(--ember)}
+.grave .trash::after{content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 8px);white-space:nowrap;background:#121315;border:1px solid var(--ember);color:#f1ece4;font-size:13px;line-height:1.2;padding:5px 9px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.6);opacity:0;pointer-events:none;transform:translateY(3px);transition:opacity .12s,transform .12s}
+.grave .trash:hover::after,.grave .trash:focus-visible::after{opacity:1;transform:none}
 .grave .tag.example{position:absolute;top:36.6%;right:21.5%;font-size:2.4cqw;color:#d9d6d0;border-color:rgba(200,100,42,.7);background:rgba(14,15,17,.6)}
 .dlg.wide{max-width:600px;max-height:calc(100vh - 40px);overflow:auto}
 .trust{margin:4px 0 10px;padding-left:20px}
@@ -538,9 +540,9 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
 
 <div class="modal" id="delModal" role="dialog" aria-modal="true" aria-labelledby="delT">
   <div class="dlg">
-    <h3 id="delT">Remove from the Hall?</h3>
-    <p id="delText"></p>
-    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="delConfirm">Remove</button></div>
+    <h3 id="delT">Lay to rest?</h3>
+    <p id="delText">This will remove the character from the Hall of the Fallen permanently. Do you want to continue?</p><p class="note" id="delNote"></p>
+    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="delConfirm">Continue</button></div>
   </div>
 </div>
 
@@ -798,7 +800,7 @@ function renderHall(){
     const when=x.diedAt?new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Unknown date";
     const cls=(x.snap&&x.snap.className)||(x.cls||"").replace(/\s*\(.*\)$/,"")||(x.tag?x.tag.replace(/^tag/i,""):"");
     return `<article class="grave" data-gid="${x.id}">
-      <button class="trash" data-trash="${x.id}" title="Remove from the Hall" aria-label="Remove ${esc(x.name)} from the Hall of the Fallen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
+      <button class="trash" data-trash="${x.id}" data-tip="Lay ${esc(x.name)} to rest." aria-label="Lay ${esc(x.name)} to rest"><svg viewBox="0 0 24 24"><g transform="rotate(40 12 12)"><path d="M8.5 2.2h7M12 2.2v10.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.6 12.4h8.8v4.2c0 2.6-2 4.8-4.4 5.4-2.4-.6-4.4-2.8-4.4-5.4z" fill="currentColor"/></g></svg></button>
       ${x.sample?'<span class="tag example">EXAMPLE</span>':""}
       <div class="gface">
       <div class="gn${x.name.length>14?" long":""}">${esc(x.name)}</div>
@@ -890,15 +892,16 @@ document.addEventListener("click",e=>{
   const t=e.target.closest("[data-trash]");if(!t)return;
   const x=S.chars.find(c=>c.id===t.dataset.trash);if(!x)return;
   delId=x.id;
-  $("#delText").textContent=`${x.name} (level ${x.deathLevel||x.level}) will be removed from the Hall of the Fallen for good.${x.link&&!x.sample?" Game sync won't add them back.":""}`;
+  $("#delT").textContent=`Lay ${x.name} to rest?`;
+  $("#delNote").textContent=x.link&&!x.sample?"Game sync won't bring them back, even while the save is still in your character list.":"";
   $("#delModal").classList.add("open");
 });
 $("#delConfirm").onclick=()=>{
   const x=S.chars.find(c=>c.id===delId);$("#delModal").classList.remove("open");if(!x)return;
-  if(x.link&&!x.sample){S.removedGraves=S.removedGraves||[];const f=x.link.split("#fallen-")[0];if(!S.removedGraves.includes(f))S.removedGraves.push(f)}
+  if(x.link&&!x.sample){S.removedGraves=S.removedGraves||[];const f=x.link;if(!f.includes("#fallen-")&&!S.removedGraves.includes(f))S.removedGraves.push(f)}
   S.chars=S.chars.filter(c=>c.id!==x.id);
   if(S.active===x.id)S.active=(S.chars.find(c=>c.status!=="fallen")||S.chars[0]||{}).id||null;
-  save();render();toast(`${x.name} removed from the Hall`);
+  save();render();toast(`${x.name} has been laid to rest`);
 };
 function seedSample(){
   if(S.sampleSeeded){const old=S.chars.find(c=>c.sample);if(old&&(!old.snap||!old.snap.gear||!old.gearNames||!old.gearNames.equipment[0].sections)){S.sampleSeeded=false;S.chars=S.chars.filter(c=>c!==old)}else return}S.sampleSeeded=true;
