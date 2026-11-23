@@ -178,6 +178,7 @@ input[type=checkbox]{accent-color:var(--blood)}
 .mapcard .mh .sub{color:var(--muted);font-size:14px}
 .mapcard .mh .reqs{margin-top:8px;font-size:14px}
 .mapwrap{position:relative;aspect-ratio:1/1;background:#0c0d0e repeating-linear-gradient(45deg,#141517 0 10px,#0e0f11 10px 20px)}
+body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 .cavenote{margin-top:10px;padding:8px 11px;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;background:rgba(255,255,255,.03);font-size:14px;color:var(--bone)}
 .cavenote a{white-space:nowrap}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -1697,7 +1698,7 @@ $("#syncConnect").onclick=()=>{S.saveSource="local";save();$("#steamSteps").hidd
 // Steam keeps saves in Program Files, which browsers block for live folder access,
 // so this reads them through the classic folder upload input instead (files stay on the computer).
 $("#syncSteam").onclick=()=>{S.saveSource="steam";save();$("#steamPath").textContent=STEAM_PATH;$("#steamSteps").hidden=false;copyText(STEAM_PATH);$("#syncOnce").click()};
-$("#syncForget").onclick=async()=>{const n=await Sync.forgetCopies();toast(n?`Forgot ${n} saved character file${n>1?"s":""}. Your tracker progress is kept.`:"No saved character files")};
+$("#syncForget").onclick=async()=>{const n=await Sync.forgetCopies();Sync.stop();toast(n?`Forgot ${n} saved character file${n>1?"s":""}. Your tracker progress is kept.`:"No saved character files")};
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
 $("#syncOnce").onchange=e=>{Sync.loadOnce(e.target.files);e.target.value=""};
@@ -1850,6 +1851,8 @@ new MutationObserver(wizUpdate).observe($("#gameStatus"),{childList:true,charact
 function setSyncMin(on){$("#syncCard").classList.toggle("min",on);$("#syncMin").textContent=on?"▾ Show":"▴ Hide";$("#syncMin").setAttribute("aria-expanded",String(!on));$("#syncMin").title=on?"Show the sync box":"Minimize the sync box"}
 $("#syncMin").onclick=()=>{S.syncMin=!$("#syncCard").classList.contains("min");S.syncMinSet=true;save();setSyncMin(S.syncMin)};
 function syncSummary(savesOk){
+  // synced players get characters from their saves, so the manual tools step aside
+  document.body.classList.toggle("synced",!!savesOk);
   const n=S.chars.filter(c=>c.link&&c.status!=="fallen").length;
   $("#syncSum").textContent=savesOk?`✓ ${n} character${n===1?"":"s"}${Game.ready?" · gear ready":""}`:"not synced";
   if(savesOk&&Game.ready&&!S.syncMinSet&&!$("#wizModal").classList.contains("open")){S.syncMin=true;S.syncMinSet=true;save();setSyncMin(true)}
