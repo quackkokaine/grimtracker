@@ -109,7 +109,33 @@ input[type=checkbox]{accent-color:var(--blood)}
 .syncinfo{flex:1 1 420px;min-width:0}
 .syncinfo .note{margin:2px 0}
 .syncbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
-.syncbtns .stack{display:flex;flex-direction:column;gap:6px}
+.syncbtns .stack{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.btn.big{font-size:17px;padding:10px 22px}
+.srow{display:flex;align-items:baseline;gap:8px;margin:4px 0;flex-wrap:wrap}
+.srow b{font-size:14px;color:var(--bone);min-width:84px}
+.srow .dot{align-self:center}
+.sync .dot{width:9px;height:9px;border-radius:50%;background:#555;display:inline-block;flex:none}
+.sync .dot.live,.wst .dot.live{background:var(--ok);box-shadow:0 0 0 3px rgba(127,163,90,.2)}
+.sync .dot.warn{background:var(--ember)}
+.dlg.wiz{max-width:680px}
+.wiz .safe{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:10px 12px;margin-bottom:12px}
+.wiz .safe summary{cursor:pointer;list-style:none;font-size:14.5px;color:var(--text)}
+.wiz .safe summary::-webkit-details-marker{display:none}
+.wiz .safe .more{color:var(--ember);text-decoration:underline;margin-left:4px}
+.wstep{border:1px solid var(--line2);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.wstep.next{border-color:var(--blood);box-shadow:0 0 0 2px rgba(200,100,42,.25)}
+.wstep h4{font-family:Cinzel;font-size:16px;color:var(--bone);margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wstep h4 .num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--blood2);color:#fff;font-size:13px}
+.wstep h4 .opt{font-family:"Alegreya Sans";font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.wst{font-family:"Alegreya Sans";font-size:13px;font-weight:500;color:var(--ok);margin-left:auto}
+.wst.warn{color:var(--ember)}
+.wchoices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.wchoices{grid-template-columns:1fr}}
+.wchoice{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:10px}
+.wchoice .btn{width:100%}
+.wchoice .note{margin:6px 0 0}
+.wsmall{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.wiz .acts{align-items:center;justify-content:space-between}
 .syncdbg table td:first-child{width:180px}
 .sync code{font-size:12px;background:#0e0f11;padding:1px 4px;border-radius:3px;color:var(--bone)}
 .syncdbg summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px}
@@ -281,33 +307,19 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
   <section class="card sync" id="syncCard">
     <div class="syncmain">
       <div class="syncinfo">
-        <h3>Game sync <span class="dot" id="syncDot"></span></h3>
-        <p class="note" id="syncStatus">Not connected. Connect your Grim Dawn save folder to track hardcore characters automatically.</p>
-        <p class="note">Pick <code>Documents\My Games\Grim Dawn\save</code>, or with Steam Cloud on, <code>Steam\userdata\&lt;your id&gt;\219990\remote\save</code>. Files are only read, never changed or uploaded.</p>
+        <h3>Game sync</h3>
+        <div class="srow"><span class="dot" id="syncDot"></span><b>Characters</b><span class="note" id="syncStatus">Not synced yet.</span></div>
+        <div class="srow"><span class="dot" id="gameDot"></span><b>Gear data</b><span class="note" id="gameStatus">Not loaded yet.</span></div>
       </div>
       <div class="syncbtns">
-        <div class="stack" id="syncConnectWrap">
-          <button class="btn red" id="syncConnect">Connect save folder</button>
-          <button class="btn sm ghost" id="syncSteam" title="Copies the Steam save path and opens the folder picker">Saves in Steam Cloud?</button>
+        <div class="stack">
+          <button class="btn red big" id="syncAll">Sync Grim Dawn</button>
+          <button class="btn sm ghost" id="syncSetup">Sync options</button>
         </div>
-        <button class="btn" id="syncReconnect" hidden>Reconnect</button>
-        <button class="btn ghost" id="syncStop" hidden>Disconnect</button>
-        <label class="btn ghost" id="syncOnceLbl" title="Reads the folder once. Use this if live sync isn't supported in your browser.">Load once<input type="file" id="syncOnce" webkitdirectory multiple hidden></label>
       </div>
     </div>
-    <div class="syncmain gamerow">
-      <div class="syncinfo">
-        <h3>Game files <span class="dot" id="gameDot"></span> <span class="opt">optional</span></h3>
-        <p class="note" id="gameStatus">Connect your Grim Dawn install folder (the one with <code>Grim Dawn.exe</code>) to see each character's gear.</p>
-        <p class="note">Installed under <code>Program Files</code> (the Steam default)? Browsers block live access there, so use <b>Load once</b> and pick <code>Steam\steamapps\common\Grim Dawn</code>. Gear already looked up stays on each grave.</p>
-      </div>
-      <div class="syncbtns">
-        <button class="btn" id="gameConnect">Connect game folder</button>
-        <button class="btn" id="gameReconnect" hidden>Reconnect</button>
-        <button class="btn ghost" id="gameStop" hidden>Disconnect</button>
-        <label class="btn ghost" id="gameOnceLbl" title="Reads the game files once. Use this if your game is installed under Program Files (most Steam installs).">Load once<input type="file" id="gameOnce" webkitdirectory multiple hidden></label>
-      </div>
-    </div>
+    <input type="file" id="syncOnce" webkitdirectory multiple hidden>
+    <input type="file" id="gameOnce" webkitdirectory multiple hidden>
     <details class="syncdbg"><summary>Sync details</summary>
       <div id="syncDetails" class="note">Nothing read yet.</div>
       <label class="note" style="display:flex;gap:6px;align-items:center;margin-top:8px">Shrine list layout
@@ -411,44 +423,48 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
   </form>
 </div>
 
-<div class="modal" id="trustModal" role="dialog" aria-modal="true" aria-labelledby="trustT">
-  <div class="dlg wide">
-    <h3 id="trustT">Your saves are safe</h3>
-    <p>Before you pick your save folder, here's exactly what this site does with it:</p>
-    <ul class="trust">
-      <li><b>Read-only.</b> The site only asks your browser for permission to <i>view</i> files. Your browser enforces that, so the site can't change, move, overwrite or delete anything in your saves.</li>
-      <li><b>Nothing leaves your computer.</b> There is no server behind this site. Your files are read right here in this page and are never uploaded, sent or shared with anyone, including whoever runs the site.</li>
-      <li><b>Only character files are read.</b> It looks for each character's <code>player.gdc</code> and reads the name, level, class, shrines, stats and gear. Everything else in the folder is ignored.</li>
-      <li><b>Stored in your browser only.</b> Your progress, plus a small copy (about 20 KB) of each character file, is kept in this browser so it's still here after a refresh. Clearing your browser data removes it.</li>
-      <li><b>You stay in control.</b> Disconnect any time with the button here, or remove the site's access in your browser's site settings.</li>
-    </ul>
-    <p class="note">Next, your browser will ask something like <i>“Let this site view files?”</i>. That's the read-only permission described above.</p>
-    <label class="chkrow"><input type="checkbox" id="trustSkip"> Don't show this again</label>
-    <div class="acts"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn red" id="trustGo">Continue to folder picker</button></div>
-  </div>
-</div>
+<div class="modal" id="wizModal" role="dialog" aria-modal="true" aria-labelledby="wizT">
+  <div class="dlg wide wiz">
+    <div class="statshead"><h3 id="wizT">Sync Grim Dawn</h3><button type="button" class="btn ghost sm" data-close aria-label="Close">✕</button></div>
+    <details class="safe"><summary><b>Your files are safe.</b> Read-only, nothing is uploaded, nothing is changed. <span class="more">How it works</span></summary>
+      <ul class="trust">
+        <li><b>Read-only.</b> The site only asks your browser for permission to <i>view</i> files. Your browser enforces that, so nothing can be changed, moved, overwritten or deleted.</li>
+        <li><b>Nothing leaves your computer.</b> There is no server behind this site. Files are read right here in this page and never uploaded, sent or shared with anyone, including whoever runs the site.</li>
+        <li><b>Only what's needed is read.</b> Each character's <code>player.gdc</code>, plus the game's item database and English text for gear names. Everything else is ignored.</li>
+        <li><b>Kept in your browser only.</b> Your progress, a small copy of each character file and the game's item data stay in this browser so you don't have to pick them again. Clearing your browser data removes them.</li>
+        <li><b>You stay in control.</b> “Forget” buttons below remove saved data, and your browser's site settings remove the site's access.</li>
+      </ul>
+      <p class="note">Your browser may ask something like <i>“Let this site view files?”</i> or call it “uploading”. Both are the read-only access described above.</p>
+    </details>
 
-<div class="modal" id="steamModal" role="dialog" aria-modal="true" aria-labelledby="steamT">
-  <div class="dlg wide">
-    <h3 id="steamT">Steam Cloud saves</h3>
-    <p>With Steam Cloud on, Grim Dawn keeps saves inside <code>Program Files</code>. Chrome and Edge won't let websites keep a live connection to anything in Program Files (a safety rule), so there are two ways to go:</p>
-    <h4 class="opth">Option 1 · Read your saves now</h4>
-    <ol class="steps">
-      <li>Click <b>Read Steam saves</b>. The folder path is copied for you.</li>
-      <li>In the folder window, click the <b>address bar</b>, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
-      <li>Open the <b>numbered folder</b> (your Steam ID), then <b>219990</b>, then <b>remote</b>.</li>
-      <li>Click the <b>save</b> folder once, then <b>Upload</b>. Your browser calls it uploading, but the files stay on your computer.</li>
-    </ol>
-    <p class="note">This reads your saves once. Do it again after you play to update. Files are only viewed, never changed or sent anywhere.</p>
-    <div class="pathrow"><code id="steamPath"></code><button type="button" class="btn sm" id="steamCopy">Copy</button></div>
-    <h4 class="opth">Option 2 · Live sync (switch to local saves)</h4>
-    <ol class="steps">
-      <li>Back up the Steam <code>save</code> folder above (copy it somewhere safe).</li>
-      <li>In Grim Dawn, open <b>Options</b> and turn off <b>Cloud Saving</b>, then exit the game and Steam.</li>
-      <li>Copy that <code>save</code> folder into <code>Documents\My Games\Grim Dawn</code>.</li>
-      <li>Start the game to check your characters are there, then use <b>Connect save folder</b> here.</li>
-    </ol>
-    <div class="acts"><button type="button" class="btn ghost" data-close>Close</button><button type="button" class="btn red" id="steamOpen">Read Steam saves</button></div>
+    <section class="wstep" id="wzStep1">
+      <h4><span class="num">1</span>Your characters <span class="wst" id="wzSaves"></span></h4>
+      <div class="wchoices">
+        <div class="wchoice">
+          <button class="btn red" id="syncConnect">Saves in Documents</button>
+          <p class="note"><code>Documents\My Games\Grim Dawn\save</code>. Stays synced while you play.</p>
+        </div>
+        <div class="wchoice">
+          <button class="btn red" id="syncSteam">Saves in Steam Cloud</button>
+          <p class="note"><code>Steam\userdata\&lt;id&gt;\219990\remote\save</code>. Read on each sync (browsers block live access to Program Files).</p>
+        </div>
+      </div>
+      <ol class="steps" id="steamSteps" hidden>
+        <li>The path <code id="steamPath"></code> is copied. In the folder window, click the <b>address bar</b>, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
+        <li>Open your <b>numbered Steam ID</b> folder, then <b>219990</b>, then <b>remote</b>.</li>
+        <li>Click the <b>save</b> folder once, then <b>Upload</b> (the files stay on your computer).</li>
+      </ol>
+      <div class="wsmall"><button class="btn sm ghost" id="syncReconnect" hidden>Reconnect live sync</button><button class="btn sm ghost" id="syncStop" hidden>Stop live sync</button><button class="btn sm ghost" id="syncForget">Forget character copies</button></div>
+    </section>
+
+    <section class="wstep" id="wzStep2">
+      <h4><span class="num">2</span>Gear data <span class="opt">one time</span> <span class="wst" id="wzGame"></span></h4>
+      <p class="note">Pick your Grim Dawn install folder (the one with <code>Grim Dawn.exe</code>), usually <code id="gamePath">C:\Program Files (x86)\Steam\steamapps\common\Grim Dawn</code> <button type="button" class="btn sm" id="gamePathCopy">Copy</button></p>
+      <p class="note">The item database and English text (about 185 MB) are kept in this browser, so you only do this once. Do it again after a big game update.</p>
+      <div class="wsmall"><button class="btn red" id="gamePick">Pick game folder</button><button class="btn sm ghost" id="gameConnect" hidden>Connect live instead</button><button class="btn sm ghost" id="gameReconnect" hidden>Reconnect</button><button class="btn sm ghost" id="gameStop" hidden>Forget gear data</button></div>
+    </section>
+
+    <div class="acts"><span class="note" id="wzDone"></span><button type="button" class="btn" data-close>Done</button></div>
   </div>
 </div>
 
@@ -929,7 +945,7 @@ const Sync=(()=>{
 
   function status(text,state){$("#syncStatus").textContent=text;$("#syncDot").className="dot"+(state?" "+state:"")}
   function buttons(mode){ // mode: off | live | reconnect
-    $("#syncConnectWrap").hidden=mode!=="off"||!canLive;
+    $("#syncConnect").disabled=!canLive;$("#syncConnect").title=canLive?"":"Live sync needs Chrome or Edge";
     $("#syncReconnect").hidden=mode!=="reconnect";
     $("#syncStop").hidden=mode==="off";
   }
@@ -951,7 +967,7 @@ const Sync=(()=>{
         found.forEach(f=>{const k=f.folder+"/"+f.name;if(!files.has(k))files.set(k,{h:f.h,folder:f.folder,mod:0})});
         [...files.keys()].forEach(k=>{if(!keys.has(k))files.delete(k)});
       }
-      if(!files.size){busy=false;stop(false);status("No character files in that folder. Pick the save folder, or if you use Steam Cloud, click “Saves in Steam Cloud?”.","warn");return}
+      if(!files.size){busy=false;stop(false);status("No character files in that folder. Pick the save folder, or choose “Saves in Steam Cloud” in Sync Grim Dawn.","warn");return}
       let changed=0;
       for(const f of files.values()){
         let file;try{file=await f.h.getFile()}catch(e){continue}
@@ -959,7 +975,7 @@ const Sync=(()=>{
         if(await ingest(f.folder,await file.arrayBuffer(),file.lastModified)){f.mod=file.lastModified;changed++}
       }
       const n=[...report.values()].filter(r=>r.hc).length;
-      status(files.size?`Live · watching ${files.size} save file${files.size>1?"s":""} (${n} hardcore) · checked ${new Date().toLocaleTimeString()}`:"No character files in that folder. Pick the save folder, or if you use Steam Cloud, click “Saves in Steam Cloud?”.",files.size?"live":"warn");
+      status(files.size?`Live · watching ${files.size} save file${files.size>1?"s":""} (${n} hardcore) · checked ${new Date().toLocaleTimeString()}`:"No character files in that folder. Pick the save folder, or choose “Saves in Steam Cloud” in Sync Grim Dawn.",files.size?"live":"warn");
       if(changed)render();
       renderDetails();
     }catch(e){
@@ -1068,26 +1084,18 @@ const Sync=(()=>{
     status(ok?`Read ${ok} of ${gdc.length} save files (${new Date().toLocaleTimeString()}). They stay here after a refresh; load again after you play to update.`:`Couldn't read any of the ${gdc.length} save files. Open Sync details below for the reason.`,ok===gdc.length?"":"warn");
     render();renderDetails();
   }
-  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,refresh:()=>tick(true)};
+  async function forgetCopies(){const list=await copies();for(const c of list)await idb("readwrite",s=>s.delete("save:"+c.folder)).catch(()=>{});return list.length}
+  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,forgetCopies,get live(){return!!dir},refresh:()=>tick(true)};
 })();
 
 // explain read-only, local-only access before the browser's folder picker appears
-$("#syncConnect").onclick=()=>{
-  if(S.skipTrust){Sync.connect("local");return}
-  $("#trustSkip").checked=false;$("#trustModal").classList.add("open");setTimeout(()=>$("#trustGo").focus(),30);
-};
-$("#trustGo").onclick=()=>{
-  if($("#trustSkip").checked){S.skipTrust=true;save()}
-  $("#trustModal").classList.remove("open");Sync.connect("local");
-};
 const STEAM_PATH="C:\\Program Files (x86)\\Steam\\userdata";
+const copyText=t=>navigator.clipboard?navigator.clipboard.writeText(t).then(()=>true,()=>false):Promise.resolve(false);
+$("#syncConnect").onclick=()=>{S.saveSource="local";save();$("#steamSteps").hidden=true;Sync.connect("local")};
 // Steam keeps saves in Program Files, which browsers block for live folder access,
-// so this reads them through the classic folder upload input instead (stays on the computer).
-$("#syncSteam").onclick=()=>{$("#steamPath").textContent=STEAM_PATH;$("#steamModal").classList.add("open");setTimeout(()=>$("#steamOpen").focus(),30)};
-const copySteam=()=>navigator.clipboard?navigator.clipboard.writeText(STEAM_PATH).then(()=>true,()=>false):Promise.resolve(false);
-$("#steamCopy").onclick=async()=>toast(await copySteam()?"Path copied":"Select the path and copy it manually");
-$("#steamOpen").onclick=()=>{copySteam();$("#steamModal").classList.remove("open");$("#syncOnce").click()};
-
+// so this reads them through the classic folder upload input instead (files stay on the computer).
+$("#syncSteam").onclick=()=>{S.saveSource="steam";save();$("#steamPath").textContent=STEAM_PATH;$("#steamSteps").hidden=false;copyText(STEAM_PATH);$("#syncOnce").click()};
+$("#syncForget").onclick=async()=>{const n=await Sync.forgetCopies();toast(n?`Forgot ${n} saved character file${n>1?"s":""}. Your tracker progress is kept.`:"No saved character files")};
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
 $("#syncOnce").onchange=e=>{Sync.loadOnce(e.target.files);e.target.value=""};
@@ -1098,8 +1106,14 @@ const Game=(()=>{
   const idb=(mode,fn)=>new Promise((res,rej)=>{try{const o=indexedDB.open("gdhc-sync",1);o.onupgradeneeded=()=>o.result.createObjectStore("kv");o.onsuccess=()=>{try{const tx=o.result.transaction("kv",mode);const r=fn(tx.objectStore("kv"));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)}catch(e){rej(e)}};o.onerror=()=>rej(o.error);setTimeout(()=>rej(new Error("storage timeout")),3000)}catch(e){rej(e)}});
   const keep=h=>idb("readwrite",s=>h?s.put(h,"game"):s.delete("game")).catch(()=>{});
   const recall=()=>idb("readonly",s=>s.get("game")).catch(()=>null);
+  // The picked game files (item databases + English text, ~185 MB) are kept in IndexedDB so
+  // gear lookups work on later visits without picking the game folder again. No timeout: big write.
+  const bigIdb=(mode,fn)=>new Promise((res,rej)=>{try{const o=indexedDB.open("gdhc-sync",1);o.onupgradeneeded=()=>o.result.createObjectStore("kv");o.onsuccess=()=>{try{const tx=o.result.transaction("kv",mode);const r=fn(tx.objectStore("kv"));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)}catch(e){rej(e)}};o.onerror=()=>rej(o.error)}catch(e){rej(e)}});
+  const keepFiles=files=>bigIdb("readwrite",s=>s.put({at:Date.now(),files:files.map(f=>({path:f.path,file:f.file}))},"gamefiles"));
+  const storedFiles=()=>bigIdb("readonly",s=>s.get("gamefiles")).catch(()=>null);
+  const forgetFiles=()=>bigIdb("readwrite",s=>s.delete("gamefiles")).catch(()=>{});
   function status(t,state){$("#gameStatus").innerHTML=t;$("#gameDot").className="dot"+(state?" "+state:"")}
-  function buttons(m){$("#gameConnect").hidden=m!=="off"||!canLive;$("#gameReconnect").hidden=m!=="reconnect";$("#gameStop").hidden=m!=="on"}
+  function buttons(m){$("#gameReconnect").hidden=m!=="reconnect";$("#gameStop").hidden=m!=="on";$("#gamePick").textContent=m==="on"?"Pick game folder again":"Pick game folder"}
   // collect only the files we need: database/*.arz and resources/Text_EN.arc (base game + expansions)
   async function collect(dir){
     const out=[];
@@ -1127,11 +1141,17 @@ const Game=(()=>{
   async function connect(){try{const d=await window.showDirectoryPicker({id:"gd-game",mode:"read"});keep(d);await open(d)}catch(e){if(e&&e.name!=="AbortError"){status("Couldn't read the game files: "+esc(e.message),"warn");buttons("off")}}}
   async function reconnect(){const d=await recall();if(!d)return buttons("off");try{if(await d.requestPermission({mode:"read"})==="granted")await open(d)}catch(e){status("Couldn't reconnect: "+esc(e.message),"warn")}}
   async function resume(){
-    if(!canLive){buttons("off");status("Reading game files needs Chrome or Edge.","");return}
+    const st=await storedFiles();
+    if(st&&st.files&&st.files.length){
+      try{status("Opening saved gear data…","live");game=await GDDB.openGame(st.files);buttons("on");
+        status(`Ready · saved in this browser ${new Date(st.at).toLocaleDateString()}`,"live");await resolveAll();return}
+      catch(e){game=null;status("Saved gear data couldn't be opened. Pick the game folder again.","warn")}
+    }
+    if(!canLive){buttons("off");return}
     const d=await recall();if(!d)return buttons("off");
     try{if(await d.queryPermission({mode:"read"})==="granted")await open(d);else{buttons("reconnect");status("Game folder remembered. Click Reconnect to show gear names.","warn")}}catch(e){buttons("off")}
   }
-  function stop(){game=null;keep(null);buttons("off");status("Not connected. Gear names already looked up are kept.","")}
+  function stop(){game=null;keep(null);forgetFiles();buttons("off");status("Not loaded. Gear already looked up stays on each grave.","")}
   async function describeAll(g){
     const one=async it=>it?Object.assign({base:it.base},await game.describe(it)):null;
     return{equipment:await Promise.all(g.equipment.map(one)),weapons:await Promise.all(g.weapons.map(w=>Promise.all(w.map(one))))};
@@ -1154,12 +1174,16 @@ const Game=(()=>{
     const want=/(^|\/)(database\/[^/]+\.arz|resources\/text_en\.arc)$/i;
     const files=[...list].filter(f=>want.test(f.webkitRelativePath||f.name)).map(f=>({path:f.webkitRelativePath||f.name,file:f}));
     try{status("Reading game files…","live");game=await GDDB.openGame(files);buttons("on");
-      status(`Loaded once · ${game.dbs.length} item database${game.dbs.length>1?"s":""} · ${game.textCount.toLocaleString()} text entries. Load again after a game update.`,"live");await resolveAll()}
+      status("Saving gear data in this browser…","live");await resolveAll();
+      try{await keepFiles(files);status(`Ready · saved in this browser ${new Date().toLocaleDateString()}, no need to pick it again`,"live")}
+      catch(e){status("Ready for this visit (your browser didn't have room to keep the files, so pick the folder again next time)","warn")}}
     catch(e){game=null;buttons("off");status("Couldn't read the game files: "+esc(e.message),"warn")}
   }
   return{connect,reconnect,resume,stop,resolveChar,loadOnce,get ready(){return!!game}};
 })();
 $("#gameConnect").onclick=()=>Game.connect();
+$("#gamePick").onclick=()=>{copyText($("#gamePath").textContent);$("#gameOnce").click()};
+$("#gamePathCopy").onclick=async()=>toast(await copyText($("#gamePath").textContent)?"Path copied":"Select the path and copy it manually");
 $("#gameReconnect").onclick=()=>Game.reconnect();
 $("#gameStop").onclick=()=>Game.stop();
 // copy the file list first: clearing the input empties its live list
@@ -1203,6 +1227,31 @@ function showGear(id){
   if((!x.gearNames||x.gearNames.v!==3)&&!x.sample&&Game.ready)Game.resolveChar(x).then(()=>{if($("#gearModal").classList.contains("open"))showGear(id)});
 }
 document.addEventListener("click",e=>{const t=e.target.closest("[data-gear]");if(t)showGear(t.dataset.gear)});
+
+/* ---------- ONE-BUTTON SYNC ----------
+   The browser needs one pick for the saves and one for the game, so the setup dialog walks
+   through both. After that, the game data is kept, and the main button only re-reads saves. */
+function wizUpdate(){
+  const sv=$("#syncStatus").textContent;
+  const savesOk=$("#syncDot").classList.contains("live")||/^(Read|Showing|Live)/.test(sv);
+  $("#wzSaves").textContent=savesOk?"✓ "+sv.split(/[.(]/)[0].trim():"";
+  $("#wzGame").textContent=Game.ready?"✓ Ready":"";
+  $("#wzStep1").classList.toggle("next",!savesOk);
+  $("#wzStep2").classList.toggle("next",savesOk&&!Game.ready);
+  $("#wzDone").textContent=savesOk&&Game.ready?"All set. Next time, just click Sync.":"";
+  $("#syncAll").textContent=Sync.live?"Sync now":savesOk?"Sync again":"Sync Grim Dawn";
+}
+new MutationObserver(wizUpdate).observe($("#syncStatus"),{childList:true,characterData:true,subtree:true});
+new MutationObserver(wizUpdate).observe($("#gameStatus"),{childList:true,characterData:true,subtree:true});
+function openWizard(){$("#steamSteps").hidden=S.saveSource!=="steam";wizUpdate();$("#wizModal").classList.add("open")}
+$("#syncSetup").onclick=openWizard;
+$("#syncAll").onclick=()=>{
+  if(Sync.live){Sync.refresh();toast("Synced");return}
+  // returning Steam Cloud player with gear data saved: one click straight to the saves picker
+  if(S.saveSource==="steam"&&Game.ready){copyText(STEAM_PATH);$("#syncOnce").click();return}
+  if(S.saveSource==="local"&&Game.ready&&!$("#syncReconnect").hidden){Sync.reconnect();return}
+  openWizard();
+};
 
 $("#syncLayout").onchange=e=>{S.syncLayout=e.target.value;save();Sync.refresh()};
 
