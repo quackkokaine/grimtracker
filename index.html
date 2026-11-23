@@ -178,6 +178,8 @@ input[type=checkbox]{accent-color:var(--blood)}
 .mapcard .mh .sub{color:var(--muted);font-size:14px}
 .mapcard .mh .reqs{margin-top:8px;font-size:14px}
 .mapwrap{position:relative;aspect-ratio:1/1;background:#0c0d0e repeating-linear-gradient(45deg,#141517 0 10px,#0e0f11 10px 20px)}
+.cavenote{margin-top:10px;padding:8px 11px;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;background:rgba(255,255,255,.03);font-size:14px;color:var(--bone)}
+.cavenote a{white-space:nowrap}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .mapwrap .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
 .mapfoot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 16px;font-size:13px;color:var(--dim);border-top:1px solid var(--line2)}
@@ -1459,18 +1461,22 @@ function seedSample(){
 }
 $("#hallSort").onchange=e=>{S.hallSort=e.target.value;save();renderHall()};
 
+// Shrines inside caves and dungeons -> the world-map entrance that leads to them (Grimtools object ids).
+// Worked out from the Grimtools map's transition data: the nearest overworld entrance for each interior map.
+const CAVE_ENTRANCE={1368:246,1515:80,1517:296,1538:267,1820:140,1852:216,1891:123,1927:187,1930:373,1954:372,2036:314,2072:98,2089:53,7401:114,7406:339,7435:282,7505:8871,7546:125,8953:8947,12204:8568,12218:8576,12414:12316,82655:26,82664:207,82676:85,82738:70,82909:155,83089:6374,84288:274,84310:44,84359:210,88110:84420,91304:348,91897:6380,92197:91965};
 let mapShown=null;
 function renderMap(){
   const s=SHRINES.find(x=>x.id===S.sel);
   if(!s){return}
   const d=S.diff, r=s.req[d], hide=s.secret&&!S.spoilers;
-  const url=`https://www.grimtools.com/map/markers/shrines/${s.id}`;
-  $("#mapHead").innerHTML=`<h3>${esc(hide?"??? Secret shrine":s.name)}</h3><div class="sub">${esc(hide?"Secret area":s.zone)} · ${GROUPS.find(g=>g[0]===s.g)[1]}</div>
+  const inner=`https://www.grimtools.com/map/markers/shrines/${s.id}`;
+  const ent=CAVE_ENTRANCE[s.id], url=ent?`https://www.grimtools.com/map/objects/${ent}`:inner;
+  $("#mapHead").innerHTML=`<h3>${esc(hide?"??? Secret shrine":s.name)}</h3><div class="sub">${esc(hide?"Secret area":s.zone)} · ${GROUPS.find(g=>g[0]===s.g)[1]}</div>${ent?`<div class="cavenote">⛰ This shrine is inside ${esc(hide?"a hidden area":s.name)}. The map shows the <b>entrance</b> in the world. Click it on the map to see the inside. <a href="${inner}" target="_blank" rel="noopener">Shrine inside ↗</a></div>`:""}
     <div class="reqs">${DIFFS.map(([k,l])=>`<div><span style="color:var(--muted)">${l}:</span> ${s.req[k]==null?'<span style="color:var(--dim)">not present</span>':s.req[k]===F?'<span style="color:var(--ember)">⚔ Defeat monsters</span>':esc(hide?"???":s.req[k])}</div>`).join("")}</div>`;
   $("#mapOpen").href=url;
   if(mapShown!==s.id){
     mapShown=s.id;
-    $("#mapWrap").innerHTML=`<div class="ph"><div>Loading map… If it stays blank, <a href="${url}" target="_blank" rel="noopener">open this shrine on the Grimtools map ↗</a></div></div><iframe src="${url}" title="Map location of ${esc(s.name)}" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
+    $("#mapWrap").innerHTML=`<div class="ph"><div>Loading map… If it stays blank, <a href="${url}" target="_blank" rel="noopener">${ent?"open the cave entrance":"open this shrine"} on the Grimtools map ↗</a></div></div><iframe src="${url}" title="Map location of ${esc(s.name)}" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
   }
 }
 
