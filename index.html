@@ -55,7 +55,7 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px 60px}
 .bar.gold i{background:linear-gradient(90deg,#8a5a1e,var(--ember))}
 .charcard{display:flex;gap:18px;align-items:center;padding:18px 20px}
 .charcard .sig{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2c2622,#141416);border:2px solid var(--blood);font-family:Cinzel;font-size:30px;color:var(--bone);flex:none;box-shadow:0 0 0 4px rgba(200,100,42,.12)}
-.charcard .sig svg{width:44px;height:44px;color:#ece7df;filter:drop-shadow(0 1px 2px #000)}
+.charcard .sig svg{display:block;width:44px;height:44px;color:#ece7df;filter:drop-shadow(0 1px 2px #000)}
 .charcard.dead .sig svg{color:#9a9a9a}
 .charcard.dead .sig{border-color:#555;background:#1c1c1c;color:#888}
 .charcard .nm{font-family:Cinzel;font-size:22px;color:var(--bone);line-height:1.25}
@@ -114,8 +114,8 @@ input[type=checkbox]{accent-color:var(--blood)}
 .syncbtns .stack{display:flex;flex-direction:column;gap:6px;align-items:stretch}
 .btn.big{font-size:17px;padding:10px 22px}
 .sync{position:relative}
-.sync .minbtn{position:absolute;top:10px;right:12px;z-index:1}
-.sync:not(.min) .syncbtns{margin-top:26px}
+.sync .minbtn{position:absolute;top:12px;right:14px;z-index:1}
+.sync:not(.min) .syncbtns{margin-top:40px}
 .sync .mini-sum{display:none;font-family:"Alegreya Sans";font-weight:500;font-size:14px;color:var(--muted);margin-left:6px}
 .sync.min{padding:10px 16px}
 .sync.min .srow,.sync.min .syncdbg,.sync.min #syncSetup{display:none}
@@ -123,8 +123,8 @@ input[type=checkbox]{accent-color:var(--blood)}
 .sync.min .syncmain{align-items:center}
 .sync.min .syncinfo h3{margin:0}
 .sync.min .btn.big{font-size:14px;padding:6px 14px}
-.sync.min .minbtn{position:static;order:2}
-.sync.min .syncbtns{margin:0;flex-wrap:nowrap}
+.sync.min .minbtn{position:static;order:2;margin-left:10px}
+.sync.min .syncbtns{margin:0;flex-wrap:nowrap;gap:14px;align-items:center}
 .srow{display:flex;align-items:baseline;gap:8px;margin:4px 0;flex-wrap:wrap}
 .srow b{font-size:14px;color:var(--bone);min-width:84px}
 .srow .dot{align-self:center}
@@ -249,6 +249,8 @@ input[type=checkbox]{accent-color:var(--blood)}
 .dlg.stats{max-width:820px;max-height:calc(100vh - 40px);overflow:auto;padding:20px 24px}
 .statshead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
 .statshead h3{margin:0;font-size:24px}
+.gslot dl{margin:4px 0 0;display:grid;grid-template-columns:1fr auto;gap:3px 12px;font-size:14px;border-top:1px solid var(--line2);padding-top:6px}
+.gslot dt{color:var(--muted);min-width:0}.gslot dd{margin:0;color:var(--bone);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
 .sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media (max-width:640px){.sgrid{grid-template-columns:1fr}}
 .sbox{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:12px 14px}
@@ -262,7 +264,12 @@ input[type=checkbox]{accent-color:var(--blood)}
 .rtable{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
 .rtable th{color:var(--muted);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
 .rtable td{padding:6px;border-bottom:1px solid var(--line2);color:var(--bone)}
-.mast{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}.mast span{border:1px solid var(--line);border-radius:4px;padding:1px 7px;font-size:13px;color:var(--bone)}
+.mast{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.mast span{--c:#8a8a8a;display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--c);border-left:4px solid var(--c);border-radius:6px;padding:3px 10px;font-size:13.5px;font-weight:700;color:#f1ece4;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 30%,#17181a),color-mix(in srgb,var(--c) 10%,#17181a))}
+.mast span i{font-style:normal;font-weight:500;font-size:12px;color:#cfc9c0}
+.mast.big{gap:10px}.mast.big span{font-family:Cinzel;font-size:16px;padding:8px 16px;letter-spacing:.04em;flex:1 1 0;justify-content:space-between;min-width:160px}.mast.big span i{font-family:"Alegreya Sans";font-size:13px}
+.charcard .mast{margin-top:8px}
+.charbtns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .steps{margin:0 0 12px;padding-left:20px;color:var(--text)}
 .steps li{margin:8px 0;line-height:1.5}
 .pathrow{display:flex;gap:8px;align-items:center;margin:6px 0 2px}
@@ -1190,7 +1197,10 @@ function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");cl
 const CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
 
 // skull for hardcore characters (simple original icon)
-const SKULL='<svg viewBox="0 0 64 64" aria-label="Hardcore" role="img"><path fill="currentColor" d="M32 4C17.6 4 7 14.3 7 28.2c0 7.6 3.3 13.2 8.6 16.6V52a4 4 0 0 0 4 4h3.2v-6h4v6h4.4v-6h4v6h4.4v-6h4v6H47a4 4 0 0 0 4-4v-7.2c5.3-3.4 8.6-9 8.6-16.6C59.6 14.3 46.4 4 32 4Zm-11 21.5c4 0 7.2 3.1 7.2 7s-3.2 7-7.2 7-7.2-3.1-7.2-7 3.2-7 7.2-7Zm22 0c4 0 7.2 3.1 7.2 7s-3.2 7-7.2 7-7.2-3.1-7.2-7 3.2-7 7.2-7ZM32 38.5l4.2 7.3h-8.4L32 38.5Z"/></svg>';
+const SKULL='<svg viewBox="1.3 -2 64 64" aria-label="Hardcore" role="img"><path fill="currentColor" d="M32 4C17.6 4 7 14.3 7 28.2c0 7.6 3.3 13.2 8.6 16.6V52a4 4 0 0 0 4 4h3.2v-6h4v6h4.4v-6h4v6h4.4v-6h4v6H47a4 4 0 0 0 4-4v-7.2c5.3-3.4 8.6-9 8.6-16.6C59.6 14.3 46.4 4 32 4Zm-11 21.5c4 0 7.2 3.1 7.2 7s-3.2 7-7.2 7-7.2-3.1-7.2-7 3.2-7 7.2-7Zm22 0c4 0 7.2 3.1 7.2 7s-3.2 7-7.2 7-7.2-3.1-7.2-7 3.2-7 7.2-7ZM32 38.5l4.2 7.3h-8.4L32 38.5Z"/></svg>';
+// mastery colours, one per class
+const MCOL={"01":"#b8402e","02":"#e0862a","03":"#9152c4","04":"#3f9a62","05":"#3d7fd6","06":"#7f8f2a","07":"#2bb3c0","08":"#7fc94e","09":"#d4a92a","10":"#a3282b"};
+const mastChips=(ms,big)=>ms&&ms.length?`<div class="mast${big?" big":""}">${ms.map(m=>`<span style="--c:${MCOL[m.id]||"#8a8a8a"}">${esc(m.name)}<i>${big?"Level ":""}${m.level}</i></span>`).join("")}</div>`:"";
 /* ---------- RENDER ---------- */
 function render(){
   const c=cur();
@@ -1204,7 +1214,7 @@ function render(){
   const cc=$("#charCard");
   if(c){
     cc.className="card charcard"+(c.status==="fallen"?" dead":"");
-    cc.innerHTML=`<div class="sig"${c.hc?' title="Hardcore"':""}>${c.hc?SKULL:esc(c.name[0]||"?").toUpperCase()}</div><div><div class="nm">${esc(c.name)} <span class="badge ${c.status==="fallen"?"dead":"alive"}">${c.status==="fallen"?"Fallen":"Alive"}</span>${c.link?' <span class="tag sync" title="Updated from your save files">SYNCED</span>':""}</div><div class="meta">Level ${c.status==="fallen"?c.deathLevel||c.level:c.level}${c.cls?" · "+esc(c.cls):""}</div></div>`;
+    cc.innerHTML=`<div class="sig"${c.hc?' title="Hardcore"':""}>${c.hc?SKULL:esc(c.name[0]||"?").toUpperCase()}</div><div><div class="nm">${esc(c.name)} <span class="badge ${c.status==="fallen"?"dead":"alive"}">${c.status==="fallen"?"Fallen":"Alive"}</span>${c.link?' <span class="tag sync" title="Updated from your save files">SYNCED</span>':""}</div><div class="meta">Level ${c.status==="fallen"?c.deathLevel||c.level:c.level}${c.cls?" · "+esc(c.cls):""}</div>${c.snap?mastChips(c.snap.masteries):""}${c.snap?`<div class="charbtns"><button class="btn sm" data-stats="${c.id}">View stats</button>${c.snap.gear?`<button class="btn sm" data-gear="${c.id}">View gear</button>`:""}</div>`:""}</div>`;
   } else {
     cc.className="card charcard";
     cc.innerHTML=`<div class="sig">+</div><div><div class="nm">No character</div><div class="meta">Create one to start tracking.</div></div>`;
@@ -1338,7 +1348,7 @@ document.addEventListener("click",e=>{
 const fmt=n=>n==null||isNaN(n)?null:Math.round(n).toLocaleString();
 const fmtTime=s=>{if(s==null)return null;const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h.toLocaleString()}h ${m}m`:`${m}m`};
 function dl(rows){const r=rows.filter(([,v])=>v!=null&&v!=="");return r.length?`<dl>${r.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
-function box(t,rows){const d=dl(rows);return d?`<div class="sbox"><h4>${t}</h4>${d}</div>`:""}
+function box(t,rows){const d=dl(rows);return d?`<div class="gslot"><div class="sl">${t}</div>${d}</div>`:""}
 function showStats(id){
   const x=S.chars.find(c=>c.id===id);if(!x||!x.snap)return;
   const s=x.snap,st=s.stats||{},D=["Normal","Elite","Ultimate"];
@@ -1346,17 +1356,18 @@ function showStats(id){
   $("#statsSub").textContent=[`Level ${x.deathLevel||s.level}`,s.className||x.cls,x.status==="fallen"&&x.diedAt?"Fell "+new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):""].filter(Boolean).join(" · ");
   const pct=(a,b)=>a!=null&&b?` (${Math.round(a/b*100)}%)`:"";
   let html="";
-  if(s.masteries&&s.masteries.length)html+=`<div class="mast" style="margin-bottom:12px">${s.masteries.map(m=>`<span>${esc(m.name)} ${m.level}</span>`).join("")}</div>`;
-  if(s.physique!=null)html+=`<div class="attrs"><div><b>${fmt(s.physique)}</b><span>Physique</span></div><div><b>${fmt(s.cunning)}</b><span>Cunning</span></div><div><b>${fmt(s.spirit)}</b><span>Spirit</span></div></div>`;
-  html+=`<div class="sgrid">`+
+  if(s.masteries&&s.masteries.length)html+=`<h4 class="armh" style="margin-top:0">Classes</h4>${mastChips(s.masteries,true)}<div style="height:12px"></div>`;
+  if(s.physique!=null)html+=`<h4 class="armh">Attributes</h4><div class="attrs"><div><b>${fmt(s.physique)}</b><span>Physique</span></div><div><b>${fmt(s.cunning)}</b><span>Cunning</span></div><div><b>${fmt(s.spirit)}</b><span>Spirit</span></div></div>`;
+  html+=`<h4 class="armh">Stats</h4><div class="doll"><div class="gcol">`+
     box("Character",[["Experience",fmt(s.experience)],["Base health",fmt(s.health)],["Base energy",fmt(s.energy)],["Devotion unlocked",fmt(s.devotionUnlocked)],["Unspent skill points",fmt(s.unspentSkills)],["Unspent attribute points",fmt(s.unspentAttributes)],["Iron",fmt(s.iron)],["Tributes",fmt(s.tributes)],["Last difficulty played",s.lastDifficulty]])+
     box("Combat",[["Time played",fmtTime(st.playTime)],["Monsters killed",fmt(st.kills)],["Heroes killed",fmt(st.heroKills)],["Champions killed",fmt(st.championKills)],["Bosses killed (N / E / U)",st.bossKills?st.bossKills.map(fmt).join(" / "):null],["Deaths",fmt(st.deaths)],["Greatest damage dealt",fmt(st.greatestDamageDone)],["Greatest damage taken",fmt(st.greatestDamageReceived)]])+
+    `</div><div class="gcol">`+
     box("Hits & potions",[["Hits dealt",fmt(st.hitsInflicted)],["Critical hits dealt",st.critsInflicted!=null?fmt(st.critsInflicted)+pct(st.critsInflicted,st.hitsInflicted):null],["Hits taken",fmt(st.hitsReceived)],["Critical hits taken",fmt(st.critsReceived)],["Health potions used",fmt(st.healthPotions)],["Energy potions used",fmt(st.energyPotions)],["XP from kills",fmt(st.xpFromKills)]])+
     box("Exploration & loot",[["Shrines restored",fmt(st.shrinesRestored)],["One-shot chests opened",fmt(st.oneShotChests)],["Lore notes found",fmt(st.loreNotes)],["Legendary/epic items found",fmt(st.uniqueItems)],["Randomized items found",fmt(st.randomizedItems)],["Items crafted",fmt(st.itemsCrafted)],["Relics crafted",fmt(st.relicsCrafted)],["Transcendent relics",fmt(st.transcendentRelicsCrafted)],["Mythical relics",fmt(st.mythicalRelicsCrafted)],["Best Crucible wave",st.crucibleWave?fmt(st.crucibleWave):null],["Best Crucible score",st.crucibleScore?fmt(st.crucibleScore):null]])+
-    `</div>`;
+    `</div></div>`;
   if(st.perDifficulty){
     const rows=st.perDifficulty.map((p,i)=>p.greatestMonster||p.lastMonsterHitBy?`<tr><td>${D[i]}</td><td>${esc(nameOf(x,p.greatestMonster)||"–")}${p.greatestMonsterLevel?` <span class="note">lvl ${p.greatestMonsterLevel}</span>`:""}</td><td>${esc(nameOf(x,p.lastMonsterHitBy)||"–")}</td></tr>`:"").join("");
-    if(rows)html+=`<div class="sbox" style="margin-top:12px"><h4>Records by difficulty</h4><table class="rtable"><tr><th>Difficulty</th><th>Greatest monster slain</th><th>Last hit by</th></tr>${rows}</table></div>`;
+    if(rows)html+=`<h4 class="armh" style="margin-top:14px">Records by difficulty</h4><div class="gslot"><table class="rtable"><tr><th>Difficulty</th><th>Greatest monster slain</th><th>Last hit by</th></tr>${rows}</table></div>`;
   }
   $("#statsBody").innerHTML=html;
   $("#statsFoot").textContent=x.sample?"Example data.":s.readAt?`Read from the save file ${new Date(s.readAt).toLocaleString()}.`:"";
