@@ -204,6 +204,7 @@ input[type=checkbox]{accent-color:var(--blood)}
 .grave .gl{font-size:3.5cqw;font-weight:600;color:#ece8e1;text-shadow:0 1px 2px #000}
 .grave .gd{font-size:3.1cqw;color:#c9c6c0;text-shadow:0 1px 2px #000}
 .grave .gs{display:grid;grid-template-columns:repeat(3,1fr);width:100%;gap:1cqw;margin:.2cqw 0;padding:.7cqw 0;border-top:1px solid rgba(200,100,42,.45);border-bottom:1px solid rgba(200,100,42,.45)}
+.grave .gs.one{grid-template-columns:1fr}.grave .gs b small{font-size:2.8cqw;color:#cfccc6;font-weight:600}
 .grave .gs b{display:block;font-family:Cinzel;font-size:4.1cqw;font-weight:700;color:#fff7ec;text-shadow:0 1px 2px #000;line-height:1.1}
 .grave .gs span{font-size:2.5cqw;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#cfccc6;text-shadow:0 1px 2px #000}
 .grave .mast.gm{justify-content:center;gap:1.4cqw;margin:0}
@@ -1340,7 +1341,7 @@ function renderHall(){
       <div class="gn${x.name.length>14?" long":""}">${esc(x.name)}</div>
       <div class="gl">Level ${lvl(x)}${cls?" · "+esc(cls):""}</div>
       <div class="gd">Fell ${when}</div>
-      <div class="gs"><div><b>${shrineCount(x,"normal")}</b><span>Normal</span></div><div><b>${shrineCount(x,"elite")}</b><span>Elite</span></div><div><b>${shrineCount(x,"ultimate")}</b><span>Ultimate</span></div></div>
+      <div class="gs one"><div><b>${devo(x).total}<small> / ${CAP}</small></b><span>Devotion points · all sources</span></div></div>
       ${x.snap&&x.snap.masteries&&x.snap.masteries.length?mastChips(x.snap.masteries,false).replace('class="mast"','class="mast gm"'):""}
       ${gk?`<div class="gk"><span>Greatest kill</span> ${esc(gk.name)}${gk.lvl?` <i>lvl ${gk.lvl}</i>`:""}</div>`:""}
       <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="${x.cause?esc(x.cause)+" (click to edit)":"Click to edit"}">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Killed by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
