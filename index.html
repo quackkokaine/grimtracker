@@ -48,6 +48,8 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px 60px}
 .summary{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px}
 .card{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);padding:14px 16px}
 .stat .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat .sub{font-size:13px;color:var(--muted);margin-top:8px}
+#crucBar{background:linear-gradient(90deg,#5a3d8a,#9152c4)}
 .stat .val{font-family:Cinzel,serif;font-size:28px;color:var(--bone);line-height:1.1;margin-top:4px}
 .stat .val span{font-size:16px;color:var(--muted)}
 .bar{height:6px;background:#2c2e33;border-radius:3px;margin-top:10px;overflow:hidden}
@@ -354,19 +356,22 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
   <section class="summary">
     <div class="card charcard" id="charCard"></div>
     <div class="card stat">
-      <div class="label">Devotion points from shrines</div>
+      <div class="label">Campaign devotion</div>
+      <div class="val" id="campVal">0</div>
+      <div class="bar"><i id="campBar"></i></div>
+      <div class="sub">Shrines restored, all difficulties</div>
+    </div>
+    <div class="card stat">
+      <div class="label">Crucible devotion</div>
+      <div class="val" id="crucVal">0</div>
+      <div class="bar"><i id="crucBar"></i></div>
+      <div class="sub" id="crucSub">Bought with tributes</div>
+    </div>
+    <div class="card stat">
+      <div class="label">Total devotion points</div>
       <div class="val" id="dpVal">0<span> / 55</span></div>
       <div class="bar gold"><i id="dpBar"></i></div>
-    </div>
-    <div class="card stat">
-      <div class="label" id="diffLabel">Normal shrines</div>
-      <div class="val" id="diffVal">0<span> / 0</span></div>
-      <div class="bar"><i id="diffBar"></i></div>
-    </div>
-    <div class="card stat">
-      <div class="label">All difficulties</div>
-      <div class="val" id="allVal">0<span> / 0</span></div>
-      <div class="bar"><i id="allBar"></i></div>
+      <div class="sub" id="dpSub">Campaign + Crucible</div>
     </div>
   </section>
 
@@ -408,7 +413,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
           <label><input type="checkbox" data-exp="FoA"> Fangs of Asterkarn</label>
         </div>
         <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span class="note" style="font-size:14px;color:var(--muted)">Bonus points from other sources:</span>
+          <span class="note" style="font-size:14px;color:var(--muted)">Crucible points (for characters you track by hand):</span>
           <button class="btn sm" id="bonusMinus" aria-label="Remove bonus point">−</button>
           <b id="bonusVal">0</b>
           <button class="btn sm" id="bonusPlus" aria-label="Add bonus point">+</button>
@@ -1176,6 +1181,16 @@ const GROUPS=[["a1","Act 1"],["a2","Act 2"],["a3","Act 3"],["a4","Act 4"],["a5",
 const DIFFS=[["normal","Normal"],["elite","Elite"],["ultimate","Ultimate"]];
 const EXP_LABEL={AoM:"AoM",FG:"FG",FoA:"FoA"};
 const CAP=55;
+// Devotion comes from shrines (campaign) and from tributes in the Crucible. For synced characters
+// the save's total unlocked devotion tells us the Crucible share; hand-tracked ones use the counter.
+function devo(c){
+  if(!c)return{camp:0,cruc:0,total:0,fromSave:false};
+  let camp=0;["normal","elite","ultimate"].forEach(d=>camp+=Object.keys(c.done[d]||{}).length);
+  const unlocked=c.snap&&c.snap.devotionUnlocked;
+  const fromSave=unlocked!=null&&!!c.link;
+  const cruc=fromSave?Math.max(0,unlocked-camp):(c.bonus||0);
+  return{camp,cruc,total:Math.min(CAP,fromSave?Math.max(unlocked,camp):camp+cruc),fromSave};
+}
 
 /* ---------- STATE ---------- */
 const KEY="gdhc-tracker-v1";
@@ -1225,13 +1240,13 @@ function render(){
   let totDone=0,totAll=0;
   DIFFS.forEach(([d])=>{const[a,b]=countDiff(c,d);totDone+=a;totAll+=b});
   const bonus=c?c.bonus||0:0;
-  const dp=Math.min(CAP,totDone+bonus);
+  const dv=devo(c),dp=dv.total;
+  $("#campVal").textContent=dv.camp; $("#campBar").style.width=Math.min(100,dv.camp/CAP*100)+"%";
+  $("#crucVal").textContent=dv.cruc; $("#crucBar").style.width=Math.min(100,dv.cruc/CAP*100)+"%";
+  $("#crucSub").textContent=dv.fromSave?"Bought with tributes · from your save":"Bought with tributes · set in Options";
   $("#dpVal").innerHTML=`${dp}<span> / ${CAP}</span>`; $("#dpBar").style.width=(dp/CAP*100)+"%";
+  $("#dpSub").textContent=dp>=CAP?"Devotion cap reached":`Campaign + Crucible · ${CAP-dp} to the cap`;
   $("#bonusVal").textContent=bonus;
-  const[dd,dt]=countDiff(c,S.diff);
-  $("#diffLabel").textContent=DIFFS.find(x=>x[0]===S.diff)[1]+" shrines";
-  $("#diffVal").innerHTML=`${dd}<span> / ${dt}</span>`; $("#diffBar").style.width=(dt?dd/dt*100:0)+"%";
-  $("#allVal").innerHTML=`${totDone}<span> / ${totAll}</span>`; $("#allBar").style.width=(totAll?totDone/totAll*100:0)+"%";
 
   // tabs
   $("#tabs").innerHTML=DIFFS.map(([d,l])=>{const[a,b]=countDiff(c,d);return`<button role="tab" aria-selected="${d===S.diff}" data-diff="${d}">${l}<span class="ct">${a}/${b}</span></button>`}).join("");
@@ -1307,7 +1322,7 @@ function renderHall(){
   $("#hallStats").innerHTML=[["Fallen",dead.length],["Highest level reached",top||"–"],["Average level at death",avg||"–"],["Still alive",alive]]
     .map(([l,v])=>`<div class="card stat"><div class="label">${l}</div><div class="val">${v}</div></div>`).join("");
   $("#graves").innerHTML=dead.length?dead.map(x=>{
-    const dev=Math.min(CAP,tot(x)+(x.bonus||0));
+    const dev=devo(x).total;
     const when=x.diedAt?new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Unknown date";
     const cls=(x.snap&&x.snap.className)||(x.cls||"").replace(/\s*\(.*\)$/,"")||(x.tag?x.tag.replace(/^tag/i,""):"");
     return `<article class="grave" data-gid="${x.id}">
@@ -1318,7 +1333,7 @@ function renderHall(){
       <div class="gl">Level ${lvl(x)}${cls?" · "+esc(cls):""}</div>
       <div class="gd">Fell ${when}</div>
       <div class="gs"><div><b>${shrineCount(x,"normal")}</b><span>Normal</span></div><div><b>${shrineCount(x,"elite")}</b><span>Elite</span></div><div><b>${shrineCount(x,"ultimate")}</b><span>Ultimate</span></div><div><b>${dev}</b><span>Devotion</span></div></div>
-      <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="Click to edit">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Last hit by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
+      <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="Click to edit">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Killed by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
       <div class="gact">${x.snap?`<button class="btn sm" data-stats="${x.id}">View stats</button>`:""}${x.snap&&x.snap.gear?`<button class="btn sm" data-gear="${x.id}">View gear</button>`:""}${x.buildUrl?`<a class="btn sm" href="${esc(x.buildUrl)}" target="_blank" rel="noopener">View build ↗</a><button class="btn sm ghost" data-build="${x.id}" title="Change build link" aria-label="Change build link">✎</button>`:`<button class="btn sm" data-build="${x.id}">Build on Grimtools</button>`}</div>
       </div>
     </article>`}).join(""):`<div class="card empty">No one has fallen. Yet.</div>`;
