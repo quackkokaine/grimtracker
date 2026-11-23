@@ -3,38 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grim Dawn Hardcore Tracker</title>
+<title>GrimTracker · Grim Dawn character and shrine tracker</title>
+<link rel="icon" href="assets/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0f0d0c; --panel:#181412; --panel2:#201a17; --line:#3a2e27; --line2:#2a221d;
-  --text:#e6dccb; --muted:#9a8b78; --dim:#6d6053;
-  --blood:#b3261e; --blood2:#7d1813; --ember:#e0893a; --bone:#d8c9a8; --ok:#7fa35a;
+  --bg:#111214; --panel:#1a1b1e; --panel2:#222327; --line:#36383d; --line2:#2a2c30;
+  --text:#e3e3e1; --muted:#9b9c9f; --dim:#6c6e72;
+  --blood:#c8642a; --blood2:#7a3412; --ember:#e08a45; --bone:#ece7df; --ok:#7fa35a;
   --aom:#5f9e8f; --fg:#c9a23e; --foa:#7aa6d6;
   --r:8px;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 "Alegreya Sans",system-ui,sans-serif}
-body{background:radial-gradient(1200px 500px at 50% -200px,#2a1410 0%,transparent 70%),var(--bg);min-height:100vh}
+body{background:radial-gradient(1200px 500px at 50% -200px,#24262a 0%,transparent 70%),var(--bg);min-height:100vh}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--ember)}
 h1,h2,h3{font-family:Cinzel,serif;font-weight:700;letter-spacing:.04em;margin:0}
 
 /* header */
-header{border-bottom:1px solid var(--line);background:linear-gradient(#1a1311,#120e0d)}
+header{border-bottom:1px solid var(--line);background:linear-gradient(#1a1b1e,#141518)}
 .hwrap{max-width:1400px;margin:0 auto;padding:16px 20px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:12px}
-.brand svg{flex:none}
-.brand h1{font-size:22px;color:var(--bone)}
-.brand small{display:block;font-family:"Alegreya Sans";letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--blood);font-weight:700}
+.brand{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;color:inherit}
+.brand h1{margin:0;line-height:0}
+.brand img{display:block;height:86px;width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.brand .tagline{margin:4px 0 0 4px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500}
+@media (max-width:560px){.brand img{height:56px}.brand .tagline{font-size:10.5px;letter-spacing:.12em}}
 .charbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 select,.btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
 select:focus,.btn:focus-visible,input:focus{outline:2px solid var(--ember);outline-offset:1px}
 a.btn{color:var(--text);text-decoration:none;display:inline-block}
-.btn:hover{border-color:#5a4638;background:#2a211c}
+.btn:hover{border-color:#4c4f55;background:#2a2c30}
 .btn.red{background:var(--blood2);border-color:var(--blood)}
 .btn.red:hover{background:var(--blood)}
 .btn.ghost{background:transparent}
@@ -48,11 +50,11 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px 60px}
 .stat .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .stat .val{font-family:Cinzel,serif;font-size:28px;color:var(--bone);line-height:1.1;margin-top:4px}
 .stat .val span{font-size:16px;color:var(--muted)}
-.bar{height:6px;background:#2b231e;border-radius:3px;margin-top:10px;overflow:hidden}
+.bar{height:6px;background:#2c2e33;border-radius:3px;margin-top:10px;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blood2),var(--blood));border-radius:3px;transition:width .3s}
 .bar.gold i{background:linear-gradient(90deg,#8a5a1e,var(--ember))}
 .charcard{display:flex;gap:14px;align-items:center}
-.charcard .sig{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#2a1512;border:2px solid var(--blood);font-family:Cinzel;font-size:20px;color:var(--bone);flex:none}
+.charcard .sig{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#2a2420;border:2px solid var(--blood);font-family:Cinzel;font-size:20px;color:var(--bone);flex:none}
 .charcard.dead .sig{border-color:#555;background:#1c1c1c;color:#888}
 .charcard .nm{font-family:Cinzel;font-size:18px;color:var(--bone)}
 .charcard .meta{color:var(--muted);font-size:14px}
@@ -76,27 +78,27 @@ input[type=checkbox]{accent-color:var(--blood)}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;align-items:start}
 .list{display:flex;flex-direction:column;gap:12px}
 .act{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
-.act>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:11px 16px;background:linear-gradient(90deg,#221a16,#181412)}
+.act>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:11px 16px;background:linear-gradient(90deg,#222428,#1a1b1e)}
 .act>summary::-webkit-details-marker{display:none}
 .act>summary h2{font-size:16px;color:var(--bone);flex:1}
 .act>summary .ct{font-size:14px;color:var(--muted)}
-.act>summary .mini{width:80px;height:4px;background:#2b231e;border-radius:2px;overflow:hidden}
+.act>summary .mini{width:80px;height:4px;background:#2c2e33;border-radius:2px;overflow:hidden}
 .act>summary .mini i{display:block;height:100%;background:var(--blood)}
 .act>summary .chev{transition:transform .2s;color:var(--dim)}
 .act[open]>summary .chev{transform:rotate(90deg)}
 .act.complete>summary h2::after{content:" ✓";color:var(--ok)}
 
 .row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px 9px 12px;border-top:1px solid var(--line2);cursor:pointer}
-.row:hover{background:#1f1916}
-.row.sel{background:#2a1714;box-shadow:inset 3px 0 0 var(--blood)}
-.row.done .nm{color:var(--muted);text-decoration:line-through;text-decoration-color:#5a4a3e}
-.row .chk{width:26px;height:26px;border-radius:50%;border:2px solid #5a4638;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.row:hover{background:#212226}
+.row.sel{background:#2a2522;box-shadow:inset 3px 0 0 var(--blood)}
+.row.done .nm{color:var(--muted);text-decoration:line-through;text-decoration-color:#55585e}
+.row .chk{width:26px;height:26px;border-radius:50%;border:2px solid #4c4f55;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
 .row .chk svg{opacity:0}
 .row.done .chk{background:var(--blood);border-color:var(--blood)}
 .row.done .chk svg{opacity:1}
 .row .nm{font-weight:700;color:var(--text)}
 .row .zone{color:var(--muted);font-size:14px}
-.tag.found{color:var(--bone);border-color:#5a4a3e}
+.tag.found{color:var(--bone);border-color:#55585e}
 .tag.sync{color:var(--ok);border-color:#4a6234}
 .sync h3{font-size:15px;color:var(--bone);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .sync .dot{width:9px;height:9px;border-radius:50%;background:#555;display:inline-block}
@@ -109,7 +111,7 @@ input[type=checkbox]{accent-color:var(--blood)}
 .syncbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
 .syncbtns .stack{display:flex;flex-direction:column;gap:6px}
 .syncdbg table td:first-child{width:180px}
-.sync code{font-size:12px;background:#0d0b0a;padding:1px 4px;border-radius:3px;color:var(--bone)}
+.sync code{font-size:12px;background:#0e0f11;padding:1px 4px;border-radius:3px;color:var(--bone)}
 .syncdbg summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px}
 .syncdbg table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .syncdbg td{padding:3px 4px;border-top:1px solid var(--line2);vertical-align:top}
@@ -123,7 +125,7 @@ input[type=checkbox]{accent-color:var(--blood)}
 .tag.only{color:#e9a0a0;border-color:#6b2a26}
 .tag.secret{color:#c7a0e9;border-color:#4c3366}
 .pin{background:none;border:1px solid var(--line);border-radius:5px;color:var(--muted);padding:3px 7px;cursor:pointer;font-size:13px}
-.pin:hover{color:var(--ember);border-color:#6a4a2c}
+.pin:hover{color:var(--ember);border-color:#7a5432}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 
 /* side */
@@ -133,7 +135,7 @@ input[type=checkbox]{accent-color:var(--blood)}
 .mapcard .mh h3{font-size:17px;color:var(--bone)}
 .mapcard .mh .sub{color:var(--muted);font-size:14px}
 .mapcard .mh .reqs{margin-top:8px;font-size:14px}
-.mapwrap{position:relative;aspect-ratio:1/1;background:#0b0a09 repeating-linear-gradient(45deg,#121010 0 10px,#0d0b0a 10px 20px)}
+.mapwrap{position:relative;aspect-ratio:1/1;background:#0c0d0e repeating-linear-gradient(45deg,#141517 0 10px,#0e0f11 10px 20px)}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .mapwrap .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
 .mapfoot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 16px;font-size:13px;color:var(--dim);border-top:1px solid var(--line2)}
@@ -146,22 +148,31 @@ input[type=checkbox]{accent-color:var(--blood)}
 .hallhead h2{font-size:34px;color:var(--bone);letter-spacing:.08em}
 .hallhead h2::before,.hallhead h2::after{content:"†";color:var(--blood);margin:0 16px;font-size:26px;vertical-align:middle}
 .hallhead p{color:var(--muted);margin:8px 0 0}
-.graves{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.grave{display:flex;flex-direction:column;background:linear-gradient(#1b1716,#141110);border:1px solid #3a302a;border-radius:70px 70px 8px 8px;padding:26px 22px 18px;text-align:center;position:relative}
-.grave .cross{font-family:Cinzel;color:var(--blood);font-size:26px;line-height:1}
-.grave .gn{font-family:Cinzel;font-size:22px;color:var(--bone);margin-top:6px;word-break:break-word}
-.grave .gl{color:var(--muted);font-size:14px;margin-top:2px}
-.grave .gd{color:var(--dim);font-size:13px;margin-top:6px}
-.grave .gs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px;padding:10px 0;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
-.grave .gs b{display:block;font-family:Cinzel;font-size:18px;color:var(--bone);font-weight:500}
-.grave .gs span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
-.grave .ep{font-style:italic;color:#bba98f;min-height:22px;font-size:15px}
-.grave .ep.empty{color:var(--dim)}
-.grave .ep input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:5px 8px;font-style:normal;text-align:center}
-.grave .trash{position:absolute;top:14px;right:16px;background:none;border:0;color:var(--muted);opacity:.28;cursor:pointer;padding:6px;border-radius:6px;line-height:0;transition:opacity .15s,color .15s}
-.grave:hover .trash{opacity:.55}
-.grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#e05a4f}
-.grave .tag.example{position:absolute;top:18px;left:18px;color:var(--muted);border-color:#4a3e35}
+/* Hall of the Fallen: each character is carved into the gravestone art. Text sizes use container
+   units (cqw) so everything scales with the stone and stays inside its inner panel. */
+@media (max-width:560px){.hallhead h2{font-size:24px}.hallhead h2::before,.hallhead h2::after{margin:0 8px;font-size:20px}}
+.graves{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),440px));justify-content:center;gap:22px 18px}
+.grave{position:relative;container-type:inline-size;aspect-ratio:680/1020;background:url(assets/grave.webp) center/contain no-repeat;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55));text-align:center}
+.grave .gface{position:absolute;left:18%;right:17.5%;top:44%;bottom:16%;display:flex;flex-direction:column;align-items:center;gap:.9cqw;overflow:hidden}
+.grave .gface>*{flex-shrink:0}
+.grave .gn{font-family:Cinzel;font-weight:700;font-size:5.9cqw;line-height:1.1;color:#f1ece4;text-shadow:0 2px 3px #000,0 0 10px rgba(0,0,0,.8);word-break:break-word;max-width:100%}
+.grave .gn.long{font-size:4.6cqw}
+.grave .gl{font-size:3.2cqw;color:#d9d6d0;text-shadow:0 1px 2px #000}
+.grave .gd{font-size:2.8cqw;color:#aaa9a6;text-shadow:0 1px 2px #000}
+.grave .gs{display:grid;grid-template-columns:repeat(4,1fr);width:100%;gap:1cqw;margin:.6cqw 0;padding:1.2cqw 0;border-top:1px solid rgba(200,100,42,.45);border-bottom:1px solid rgba(200,100,42,.45)}
+.grave .gs b{display:block;font-family:Cinzel;font-size:4.3cqw;font-weight:700;color:#f1ece4;text-shadow:0 1px 2px #000;line-height:1.1}
+.grave .gs span{font-size:2.3cqw;letter-spacing:.06em;text-transform:uppercase;color:#b3b1ad;text-shadow:0 1px 2px #000}
+.grave .ep{font-style:italic;font-size:3.1cqw;color:#e2dbcf;text-shadow:0 1px 2px #000;line-height:1.3;cursor:text;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
+.grave .ep.noep{color:#9c9a96}
+.grave .ep input{width:100%;background:rgba(15,16,18,.85);border:1px solid var(--blood);border-radius:5px;padding:1cqw 1.6cqw;font-size:3.3cqw;font-style:normal;text-align:center;color:var(--text)}
+.grave .gact{display:flex;flex-wrap:wrap;justify-content:center;gap:1.2cqw;margin-top:auto}
+.grave .gact .btn{font-size:2.9cqw;padding:.9cqw 2cqw;background:rgba(14,15,17,.78);border-color:rgba(200,100,42,.75);color:#f1ece4;border-radius:5px}
+.grave .gact .btn:hover{background:rgba(122,52,18,.85);border-color:var(--ember)}
+.grave .trash{position:absolute;top:36%;left:21.5%;background:rgba(14,15,17,.6);border:0;color:#d9d6d0;opacity:.45;cursor:pointer;padding:1.4cqw;border-radius:6px;line-height:0;transition:opacity .15s,color .15s}
+.grave .trash svg{width:3.8cqw;height:3.8cqw}
+.grave:hover .trash{opacity:.65}
+.grave .trash:hover,.grave .trash:focus-visible{opacity:1;color:#ff7a5c}
+.grave .tag.example{position:absolute;top:36.6%;right:21.5%;font-size:2.4cqw;color:#d9d6d0;border-color:rgba(200,100,42,.7);background:rgba(14,15,17,.6)}
 .dlg.wide{max-width:600px;max-height:calc(100vh - 40px);overflow:auto}
 .trust{margin:4px 0 10px;padding-left:20px}
 .dlg .chkrow{display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:14px;letter-spacing:0;color:var(--muted);cursor:pointer}
@@ -174,16 +185,17 @@ input[type=checkbox]{accent-color:var(--blood)}
 .doll{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
 @media (max-width:640px){.doll{grid-template-columns:1fr}}
 .gcol{display:flex;flex-direction:column;gap:8px}
-.gslot{background:var(--panel2);border:1px solid var(--line2);border-left:3px solid #3a302a;border-radius:7px;padding:8px 12px;min-height:58px}
+.gslot{background:var(--panel2);border:1px solid var(--line2);border-left:3px solid #3a3c41;border-radius:7px;padding:8px 12px;min-height:58px}
 .gslot .sl{font-family:Cinzel;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);margin-bottom:2px}
 .gslot .sl .rar{font-family:"Alegreya Sans";font-size:12px;font-weight:500;letter-spacing:.08em;color:var(--muted)}
 .gslot .nm{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .gslot .wiki{font-size:12.5px;white-space:nowrap;color:var(--muted)}
 .gslot .wiki:hover{color:var(--ember)}
+.gslot .fl{margin-top:6px;font-style:italic;font-size:13px;color:var(--muted)}
 .gslot .st{margin-top:6px;border-top:1px solid var(--line2);padding-top:6px}
 .gslot .st h5{margin:6px 0 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
 .gslot .st h5:first-child{margin-top:0}
-.gslot .st ul{margin:0;padding:0;list-style:none;font-size:13.5px;line-height:1.45;color:#cfc4b0}
+.gslot .st ul{margin:0;padding:0;list-style:none;font-size:13.5px;line-height:1.45;color:#d4d4d2}
 .gslot .in{font-weight:700;font-size:15.5px;line-height:1.3}
 .gslot .im{font-size:13px;color:var(--muted)}
 .gslot.none .in{color:var(--dim);font-weight:400;font-style:italic}
@@ -212,8 +224,7 @@ input[type=checkbox]{accent-color:var(--blood)}
 .steps{margin:0 0 12px;padding-left:20px;color:var(--text)}
 .steps li{margin:8px 0;line-height:1.5}
 .pathrow{display:flex;gap:8px;align-items:center;margin:6px 0 2px}
-.pathrow code{flex:1;min-width:0;overflow-wrap:anywhere;background:#0d0b0a;border:1px solid var(--line2);border-radius:5px;padding:6px 8px;font-size:12.5px;color:var(--bone)}
-.grave .gact{flex-wrap:wrap;display:flex;justify-content:center;gap:8px;margin-top:auto;padding-top:12px}
+.pathrow code{flex:1;min-width:0;overflow-wrap:anywhere;background:#0e0f11;border:1px solid var(--line2);border-radius:5px;padding:6px 8px;font-size:12.5px;color:var(--bone)}
 .graves .empty{grid-column:1/-1}
 .note{font-size:13px;color:var(--dim)}
 
@@ -251,10 +262,10 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
 <body>
 <header>
   <div class="hwrap">
-    <div class="brand">
-      <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="#b3261e" stroke-width="2"/><path d="M20 6 L23 17 L34 20 L23 23 L20 34 L17 23 L6 20 L17 17 Z" fill="#d8c9a8"/><circle cx="20" cy="20" r="3" fill="#b3261e"/></svg>
-      <div><small>Hardcore</small><h1>Grim Dawn Devotion Tracker</h1></div>
-    </div>
+    <a class="brand" href="#" aria-label="GrimTracker home">
+      <h1><img src="assets/logo.webp" alt="GrimTracker" width="380" height="126"></h1>
+      <span class="tagline">Grim Dawn character and shrine tracker</span>
+    </a>
     <a class="btn red" id="backLink" href="#" hidden>← Back to tracker</a>
     <div class="charbar" id="charbar">
       <select id="charSel" aria-label="Character"></select>
@@ -716,17 +727,18 @@ function renderHall(){
   $("#graves").innerHTML=dead.length?dead.map(x=>{
     const dev=Math.min(CAP,tot(x)+(x.bonus||0));
     const when=x.diedAt?new Date(x.diedAt).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Unknown date";
-    const cls=x.cls||(x.tag?x.tag.replace(/^tag/i,""):"");
+    const cls=(x.snap&&x.snap.className)||(x.cls||"").replace(/\s*\(.*\)$/,"")||(x.tag?x.tag.replace(/^tag/i,""):"");
     return `<article class="grave" data-gid="${x.id}">
       <button class="trash" data-trash="${x.id}" title="Remove from the Hall" aria-label="Remove ${esc(x.name)} from the Hall of the Fallen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
       ${x.sample?'<span class="tag example">EXAMPLE</span>':""}
-      <div class="cross">†</div>
-      <div class="gn">${esc(x.name)}</div>
+      <div class="gface">
+      <div class="gn${x.name.length>14?" long":""}">${esc(x.name)}</div>
       <div class="gl">Level ${lvl(x)}${cls?" · "+esc(cls):""}</div>
-      <div class="gd">Fell ${when}${x.link?" · from save":""}</div>
+      <div class="gd">Fell ${when}</div>
       <div class="gs"><div><b>${shrineCount(x,"normal")}</b><span>Normal</span></div><div><b>${shrineCount(x,"elite")}</b><span>Elite</span></div><div><b>${shrineCount(x,"ultimate")}</b><span>Ultimate</span></div><div><b>${dev}</b><span>Devotion</span></div></div>
-      <div class="ep${x.cause?"":" empty"}" data-ep="${x.id}" title="Click to edit">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Last hit by "+esc(x.killedBy):"Add how they fell…"}</div>
+      <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="Click to edit">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Last hit by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
       <div class="gact">${x.snap?`<button class="btn sm" data-stats="${x.id}">View stats</button>`:""}${x.snap&&x.snap.gear?`<button class="btn sm" data-gear="${x.id}">View gear</button>`:""}${x.buildUrl?`<a class="btn sm" href="${esc(x.buildUrl)}" target="_blank" rel="noopener">View build ↗</a><button class="btn sm ghost" data-build="${x.id}" title="Change build link" aria-label="Change build link">✎</button>`:`<button class="btn sm" data-build="${x.id}">Build on Grimtools</button>`}</div>
+      </div>
     </article>`}).join(""):`<div class="card empty">No one has fallen. Yet.</div>`;
 }
 function editEpitaph(id){
@@ -743,7 +755,7 @@ function route(){
   const fallen=location.hash==="#fallen";
   $("#trackerView").hidden=fallen;$("#fallenView").hidden=!fallen;
   $("#charbar").hidden=fallen;$("#hallLink").hidden=fallen;$("#backLink").hidden=!fallen;
-  document.title=fallen?"Hall of the Fallen · Grim Dawn Hardcore Tracker":"Grim Dawn Hardcore Tracker";
+  document.title=fallen?"Hall of the Fallen · GrimTracker":"GrimTracker · Grim Dawn character and shrine tracker";
   scrollTo(0,0);render();
 }
 addEventListener("hashchange",route);
@@ -771,7 +783,7 @@ function showStats(id){
     box("Exploration & loot",[["Shrines restored",fmt(st.shrinesRestored)],["One-shot chests opened",fmt(st.oneShotChests)],["Lore notes found",fmt(st.loreNotes)],["Legendary/epic items found",fmt(st.uniqueItems)],["Randomized items found",fmt(st.randomizedItems)],["Items crafted",fmt(st.itemsCrafted)],["Relics crafted",fmt(st.relicsCrafted)],["Transcendent relics",fmt(st.transcendentRelicsCrafted)],["Mythical relics",fmt(st.mythicalRelicsCrafted)],["Best Crucible wave",st.crucibleWave?fmt(st.crucibleWave):null],["Best Crucible score",st.crucibleScore?fmt(st.crucibleScore):null]])+
     `</div>`;
   if(st.perDifficulty){
-    const rows=st.perDifficulty.map((p,i)=>p.greatestMonster||p.lastMonsterHitBy?`<tr><td>${D[i]}</td><td>${esc(p.greatestMonster||"–")}${p.greatestMonsterLevel?` <span class="note">lvl ${p.greatestMonsterLevel}</span>`:""}</td><td>${esc(p.lastMonsterHitBy||"–")}</td></tr>`:"").join("");
+    const rows=st.perDifficulty.map((p,i)=>p.greatestMonster||p.lastMonsterHitBy?`<tr><td>${D[i]}</td><td>${esc(nameOf(x,p.greatestMonster)||"–")}${p.greatestMonsterLevel?` <span class="note">lvl ${p.greatestMonsterLevel}</span>`:""}</td><td>${esc(nameOf(x,p.lastMonsterHitBy)||"–")}</td></tr>`:"").join("");
     if(rows)html+=`<div class="sbox" style="margin-top:12px"><h4>Records by difficulty</h4><table class="rtable"><tr><th>Difficulty</th><th>Greatest monster slain</th><th>Last hit by</th></tr>${rows}</table></div>`;
   }
   $("#statsBody").innerHTML=html;
@@ -897,6 +909,10 @@ $("#bkCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#bkTex
 $("#bkRestore").onclick=()=>{try{const d=JSON.parse($("#bkText").value);if(!Array.isArray(d.chars))throw 0;S.chars=d.chars;if(d.exp)S.exp=d.exp;S.active=(S.chars.find(c=>c.status!=="fallen")||S.chars[0]||{}).id||null;save();render();$("#backupModal").classList.remove("open");toast("Backup restored")}catch(e){toast("That doesn't look like a valid backup")}};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open"))});
 
+const SNAP_VER=3; // bump when the save reader learns to read more
+// "tagEnemyZombieA01" -> readable fallback when the game's text isn't loaded
+const prettyTag=s=>!s?"":/^tag/i.test(s)?s.replace(/^tag(Enemy|Hero|Boss|Monster|Nemesis)?/i,"").replace(/[A-Z]?\d+[a-z]?$/,"").replace(/([a-z])([A-Z])/g,"$1 $2").trim()||s:s;
+const nameOf=(c,tag)=>(c&&c.names&&c.names[tag])||prettyTag(tag);
 /* ---------- GAME SYNC ----------
    Live: File System Access API (Chrome/Edge) keeps a handle to the save folder and
    re-reads player.gdc whenever the game writes it. Fallback: a one-time folder upload. */
@@ -967,7 +983,13 @@ const Sync=(()=>{
     // A fallen record is frozen: later reads of the same save never change it, and it
     // stays in the Hall even after the save is deleted from the game folder.
     if(c&&c.status==="fallen"){
-      if(dead)return true;
+      if(dead){
+        // keep the grave permanent, but let a newer reader fill in details an older one missed
+        if((c.snapVer||0)<SNAP_VER){c.snap=GDSave.snapshot(save);if(c.snap.className)c.cls=c.snap.className;c.snapVer=SNAP_VER;delete c.gearNames;
+          const pd0=save.stats&&save.stats.perDifficulty,ld0=save.info?save.info.lastDifficulty:null;c.killedBy=(pd0&&ld0!=null&&pd0[ld0]&&pd0[ld0].lastMonsterHitBy)||c.killedBy||"";
+          if(c.snap.gear)Game.resolveChar(c);save_()}
+        return true;
+      }
       c.link=folder+"#fallen-"+(c.diedAt||Date.now()); // folder reused by a new character with the same name
       c=null;
     }
@@ -976,7 +998,7 @@ const Sync=(()=>{
     if(!c&&!dead)S.removedGraves=S.removedGraves.filter(f=>f!==folder);
     if(!c){const keep=cur();c=newChar(save.name,"",save.level);c.link=folder;if(keep&&keep.status!=="fallen"&&keep.link)S.active=keep.id}
     c.name=save.name;c.level=save.bio?save.bio.level||save.level:save.level;c.tag=save.tag;c.hc=true;c.lastSync=mod;
-    c.snap=GDSave.snapshot(save);if(c.snap.className)c.cls=c.snap.className;
+    c.snap=GDSave.snapshot(save);c.snapVer=SNAP_VER;if(c.snap.className)c.cls=c.snap.className;
     if(c.snap.gear)Game.resolveChar(c);
     const pd=save.stats&&save.stats.perDifficulty,ld=save.info?save.info.lastDifficulty:null;
     c.killedBy=(pd&&ld!=null&&pd[ld]&&pd[ld].lastMonsterHitBy)||"";
@@ -1116,11 +1138,15 @@ const Game=(()=>{
   }
   async function resolveChar(c){
     if(!game||!c.snap||!c.snap.gear)return;
-    try{c.gearNames=await describeAll(c.snap.gear);c.gearNames.at=Date.now();c.gearNames.v=2;save()}catch(e){console.warn("gear lookup failed",e)}
+    try{c.gearNames=await describeAll(c.snap.gear);c.gearNames.at=Date.now();c.gearNames.v=3;
+      // monster names (killer, greatest kill) are game text codes; keep their English names with the character
+      const tags=[c.killedBy,...(((c.snap.stats||{}).perDifficulty)||[]).flatMap(p=>[p.greatestMonster,p.lastMonsterHitBy])].filter(x=>x&&/^tag/i.test(x));
+      c.names=c.names||{};tags.forEach(tg=>{const v=game.text(tg);if(v)c.names[tg]=v});
+      save()}catch(e){console.warn("gear lookup failed",e)}
   }
   async function resolveAll(){
     if(!game)return;
-    for(const c of S.chars)if(c.snap&&c.snap.gear&&!c.sample&&(c.status!=="fallen"||!c.gearNames||c.gearNames.v!==2))await resolveChar(c);
+    for(const c of S.chars)if(c.snap&&c.snap.gear&&!c.sample&&(c.status!=="fallen"||!c.gearNames||c.gearNames.v!==3))await resolveChar(c);
     render();
   }
   // fallback for installs the browser won't connect to live (e.g. Program Files)
@@ -1136,7 +1162,8 @@ const Game=(()=>{
 $("#gameConnect").onclick=()=>Game.connect();
 $("#gameReconnect").onclick=()=>Game.reconnect();
 $("#gameStop").onclick=()=>Game.stop();
-$("#gameOnce").onchange=e=>{Game.loadOnce(e.target.files);e.target.value=""};
+// copy the file list first: clearing the input empties its live list
+$("#gameOnce").onchange=async e=>{const f=[...e.target.files];e.target.value="";await Game.loadOnce(f);if(gearPending&&$("#gearModal").classList.contains("open"))showGear(gearPending);gearPending=null};
 
 const SLOT_NAMES=["Head","Amulet","Chest","Legs","Feet","Hands","Ring","Ring","Belt","Shoulders","Medal","Relic"];
 const SLOT_BY_CLASS=[[/_head$/i,"Head"],[/_shoulders$/i,"Shoulders"],[/_chest$/i,"Chest"],[/_hands$/i,"Hands"],[/_legs$/i,"Legs"],[/_feet$/i,"Feet"],[/_waist$/i,"Belt"],[/amulet$/i,"Amulet"],[/ring$/i,"Ring"],[/medal$/i,"Medal"],[/relic$/i,"Relic"]];
@@ -1147,11 +1174,12 @@ function itemCard(label,raw,info){
   const fallback=raw.base.split("/").pop().replace(/\.dbr$/i,"");
   if(!info||!info.known)return`<div class="gslot"><div class="sl">${label}</div><div class="in" style="color:var(--bone)">${esc(fallback)}</div><div class="im">${info?"Not found in your game files":"Connect your game folder to see the name and stats"}</div></div>`;
   const r=(info.rarity||"").toLowerCase();
-  const meta=[info.level?"Item level "+info.level:"",info.req?"Requires level "+info.req:"",info.set?"Set: "+info.set:""].filter(Boolean).join(" · ");
+  const meta=[info.level?"Item level "+info.level:"",info.req?"Requires level "+info.req:"",info.speed?"Speed: "+info.speed:"",info.set?"Set: "+info.set:""].filter(Boolean).join(" · ");
   const secs=(info.sections||[]).map(s=>`${s.title?`<h5>${esc(s.title)}</h5>`:""}<ul>${s.lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`).join("");
   const wiki=info.wiki?`<a class="wiki" href="${wikiUrl(info.wiki)}" target="_blank" rel="noopener" title="Open ${esc(info.wiki)} on the Official Grim Dawn Wiki">Wiki ↗</a>`:"";
-  return`<div class="gslot r-${r}"><div class="sl">${label}${info.rarity?` <span class="rar">· ${esc(info.rarity)}</span>`:""}</div><div class="nm"><div class="in">${esc(info.name)}</div>${wiki}</div>${meta?`<div class="im">${esc(meta)}</div>`:""}${secs?`<div class="st">${secs}</div>`:""}</div>`;
+  return`<div class="gslot r-${r}"><div class="sl">${label}${info.rarity?` <span class="rar">· ${esc(info.rarity)}</span>`:""}</div><div class="nm"><div class="in">${esc(info.name)}</div>${wiki}</div>${meta?`<div class="im">${esc(meta)}</div>`:""}${secs?`<div class="st">${secs}</div>`:""}${info.flavor?`<div class="fl">${esc(info.flavor)}</div>`:""}</div>`;
 }
+let gearPending=null;
 function showGear(id){
   const x=S.chars.find(c=>c.id===id);if(!x||!x.snap||!x.snap.gear)return;
   const g=x.snap.gear,n=x.gearNames||{equipment:[],weapons:[[],[]]};
@@ -1169,9 +1197,10 @@ function showGear(id){
   $("#gearSub").textContent=[`Level ${x.deathLevel||x.snap.level}`,x.snap.className||x.cls].filter(Boolean).join(" · ");
   $("#gearBody").innerHTML=`<div class="weps first"><h4>Weapons${hasSet2?" · set 1"+(g.useAlt?"":" (active)"):""}</h4>${wep(g.weapons[0]||[],0)}${hasSet2?`<h4>Weapons · set 2${g.useAlt?" (active)":""}</h4>${wep(g.weapons[1],1)}`:""}</div>
     <h4 class="armh">Armor &amp; jewelry</h4><div class="doll"><div class="gcol">${col(LEFT)}</div><div class="gcol">${col(RIGHT)}</div></div>`;
-  $("#gearFoot").textContent=x.sample?"Example data.":!x.gearNames?(Game.ready?"Looking up names…":"Item names come from your game files. Connect your game folder in the Game files panel to see them."):`Names read from your game files ${new Date(x.gearNames.at).toLocaleString()}.`;
+  $("#gearFoot").innerHTML=x.sample?"Example data.":!x.gearNames?(Game.ready?"Looking up names…":`Item names and stats come from your game files. <button type="button" class="btn sm red" id="gearLoad">Load game files</button> <span class="note">Pick your Grim Dawn install folder, e.g. <code>Steam\\steamapps\\common\\Grim Dawn</code>.</span>`):`Names read from your game files ${new Date(x.gearNames.at).toLocaleString()}.`;
+  const gl=$("#gearLoad");if(gl)gl.onclick=()=>{gearPending=id;$("#gameOnce").click()};
   $("#gearModal").classList.add("open");
-  if((!x.gearNames||x.gearNames.v!==2)&&!x.sample&&Game.ready)Game.resolveChar(x).then(()=>{if($("#gearModal").classList.contains("open"))showGear(id)});
+  if((!x.gearNames||x.gearNames.v!==3)&&!x.sample&&Game.ready)Game.resolveChar(x).then(()=>{if($("#gearModal").classList.contains("open"))showGear(id)});
 }
 document.addEventListener("click",e=>{const t=e.target.closest("[data-gear]");if(t)showGear(t.dataset.gear)});
 

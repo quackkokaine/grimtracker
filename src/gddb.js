@@ -119,6 +119,7 @@ const GDDB = (() => {
     Convert: "Mind Control", Fumble: "Reduced Target's Attack Accuracy", ProjectileFumble: "Reduced Target's Projectile Accuracy", Taunt: "Taunt", SlowAttackSpeed: "Attack Speed Slow", RunSpeed: "Slow" };
   const DOT = { Physical: "Internal Trauma", Fire: "Burn", Cold: "Frostburn", Lightning: "Electrocute", Poison: "Poison", Life: "Vitality Decay", Bleeding: "Bleeding", Aether: "Aether Decay", Chaos: "Chaos Decay" };
   const CC = new Set(["Stun", "Freeze", "Petrify", "Trap", "Confusion", "Fear", "Sleep", "Convert", "Knockdown"]);
+  const PCTFX = new Set(["Fumble", "ProjectileFumble", "SlowAttackSpeed", "RunSpeed", "TotalSpeed"]);
   const CHAR = { Strength: ["Physique"], Dexterity: ["Cunning"], Intelligence: ["Spirit"], Life: ["Health"], Mana: ["Energy"], OffensiveAbility: ["Offensive Ability"], DefensiveAbility: ["Defensive Ability"],
     LifeRegen: ["Health Regenerated per Second"], ManaRegen: ["Energy Regenerated per Second"], AttackSpeed: ["Attack Speed"], SpellCastSpeed: ["Casting Speed"], RunSpeed: ["Movement Speed"], TotalSpeed: ["Total Speed"],
     DodgePercent: ["Chance to Avoid Melee Attacks", "%"], DeflectProjectile: ["Chance to Avoid Projectiles", "%"], IncreasedExperience: ["Experience Gained", "%"], EnergyAbsorptionPercent: ["Energy Absorbed from Enemy Spells", "%"],
@@ -155,6 +156,7 @@ const GDDB = (() => {
         if (m[3] === "Min" || m[3] === "Max") {
           const lo = g(P + "Min"), hi = g(P + "Max");
           if (CC.has(T)) L.push(chanceOf(P + "Chance", `${num(lo)}${hi > lo ? "-" + num(hi) : ""} Second ${name}${ret}`));
+          else if (PCTFX.has(T)) { const dur = g(P + "DurationMin"); mark(P + "DurationMin", P + "DurationMax"); L.push(chanceOf(P + "Chance", `${num(lo)}% ${name}${dur ? ` for ${num(dur)} Seconds` : ""}${ret}`)); }
           else if (T === "PercentCurrentLife") L.push(chanceOf(P + "Chance", `${num(lo)}% Reduction to Enemy's Health${ret}`));
           else L.push(chanceOf(P + "Chance", `${num(lo)}${hi > lo ? "-" + num(hi) : ""} ${name} Damage${ret}`));
           mark(P + "Min", P + "Max");
@@ -165,21 +167,26 @@ const GDDB = (() => {
       }
       if ((m = key.match(/^defensive(\w+?)(MaxResist|Modifier|Duration|DurationChance)?$/))) {
         const T = m[1], name = DMG[T] || words(T);
+        const resName = name.replace(/ ?Resistance$/, "");
         if (T === "Protection" && m[2] === "Modifier") L.push(`${plus(g(key))}% Armor`);
+        else if (T === "BlockAmount" || T === "Block") L.push(`${plus(g(key))}% Shield Block Amount`);
+        else if (T === "BlockChance") L.push(`${plus(g(key))}% Shield Block Chance`);
         else if (T === "Absorption") L.push(`${plus(g(key))}% Armor Absorption`);
         else if (T === "TotalSpeedResistance") L.push(`${num(g(key))}% Slow Resistance`);
         else if (T === "Reflect") L.push(`${num(g(key))}% Damage Reflected`);
-        else if (m[2] === "MaxResist") L.push(`${plus(g(key))}% Maximum ${name} Resistance`);
+        else if (m[2] === "MaxResist") L.push(`${plus(g(key))}% Maximum ${resName} Resistance`);
         else if (m[2] === "Modifier" || !m[2]) {
           if (CC.has(T) || T === "Disruption") L.push(`${num(g(key))}% Reduced ${name} Duration`);
-          else L.push(`${plus(g(key))}% ${name} Resistance`);
+          else L.push(`${plus(g(key))}% ${resName} Resistance`);
         } else L.push(`${words(key.replace(/^defensive/, ""))}: ${num(g(key))}`);
         mark(key); continue;
       }
       if ((m = key.match(/^character(\w+?)(Modifier)?$/))) {
         const base = m[1].replace(/Modifier$/, ""), def = CHAR[base] || CHAR[m[1]];
         const pct = !!m[2] || /Speed$/.test(base) || (def && def[1] === "%");
-        const label = def ? def[0] : words(base);
+        let label = def ? def[0] : words(base);
+        if (m[2] && base === "LifeRegen") label = "Health Regeneration";
+        if (m[2] && base === "ManaRegen") label = "Energy Regeneration";
         L.push(`${plus(g(key))}${pct ? "%" : ""} ${label}`); mark(key); continue;
       }
       if (key === "skillCooldownReduction") { L.push(`-${num(g(key))}% Skill Cooldown Reduction`); mark(key); continue; }
@@ -201,7 +208,7 @@ const GDDB = (() => {
     if (rec.itemSkillName) L.push(`Grants skill: ${await skillName(rec.itemSkillName)}${n(rec.itemSkillLevel) > 1 ? " (level " + num(n(rec.itemSkillLevel)) + ")" : ""}`);
     for (let i = 1; i <= 3; i++) { const ms = rec["modifiedSkillName" + i]; if (ms) L.push(`Modifies ${await skillName(ms)}`); }
     if (rec.conversionInType && rec.conversionOutType) L.push(`${num(n(rec.conversionPercentage))}% ${DMG[rec.conversionInType] || rec.conversionInType} Damage converted to ${DMG[rec.conversionOutType] || rec.conversionOutType} Damage`);
-    if (rec.racialBonusRace) { const race = [].concat(rec.racialBonusRace).map(r => t(r) || words(String(r).replace(/^Race\d*/, ""))).join(", "); if (n(rec.racialBonusPercentDamage)) L.push(`${plus(n(rec.racialBonusPercentDamage))}% Damage to ${race}`); if (n(rec.racialBonusPercentDefense)) L.push(`${num(n(rec.racialBonusPercentDefense))}% Less Damage from ${race}`); }
+    if (rec.racialBonusRace) { const race = [].concat(rec.racialBonusRace).map(r => t("tag" + r) || t(r) || String(r)).filter(Boolean).join(", "); if (n(rec.racialBonusPercentDamage)) L.push(`${plus(n(rec.racialBonusPercentDamage))}% Damage to ${race}`); if (n(rec.racialBonusPercentDefense)) L.push(`${num(n(rec.racialBonusPercentDefense))}% Less Damage from ${race}`); }
     if (rec.petBonusName) { const pb = await rec_(rec.petBonusName); const pl = statLines(pb, t); if (pl.length) L.push("Bonus to all pets: " + pl.join(", ")); }
     return L;
   }
@@ -251,6 +258,8 @@ const GDDB = (() => {
       if (aug) await add("Augment: " + (t(aug.description) || clean(aug.description || "")), aug);
       return {
         known: true, sections, wiki: baseName,
+        speed: /^Weapon/.test(base.Class || "") && base.characterBaseAttackSpeedTag ? (t(base.characterBaseAttackSpeedTag) || words(String(base.characterBaseAttackSpeedTag).replace(/^CharacterAttackSpeed/, ""))).replace(/^Speed:\s*/, "").trim() : "",
+        flavor: t(base.itemText),
         name: [prefix, quality, baseName, suffix].filter(Boolean).join(" ") || item.base.split("/").pop(),
         rarity: base.itemClassification || "", level: base.itemLevel || null, req: base.levelRequirement || null,
         cls: base.Class || "", bitmap: base.bitmap || base.artifactBitmap || "",
@@ -259,7 +268,7 @@ const GDDB = (() => {
         augment: aug ? (t(aug.description) || clean(aug.description || "")) : "",
       };
     }
-    return { describe, dbs: dbs.map(d => d.name + " (" + d.count.toLocaleString() + " records)"), textCount: text.size };
+    return { describe, text: t, dbs: dbs.map(d => d.name + " (" + d.count.toLocaleString() + " records)"), textCount: text.size };
   }
 
   return { lz4, openArz, openArc, openGame, statLines };

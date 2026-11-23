@@ -32,5 +32,6 @@ node tests/test_gddb.js   # game database reader tests
 - `src/index.template.html`: page, styles and app code
 - `src/gdsave.js`: reads `player.gdc` character files
 - `src/gddb.js`: reads the game's item database (`.arz`) and text (`.arc`)
+- `assets/`: logo and gravestone art
 
 Shrine list and requirements come from the [Grimtools checklist](https://www.grimtools.com/checklist/shrines/normal). Save and game file formats are based on [gd-edit](https://github.com/odie/gd-edit) and lost.org.uk's save documentation. Fan-made, not affiliated with Crate Entertainment.
