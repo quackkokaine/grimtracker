@@ -57,7 +57,7 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px 60px}
 .bar.gold i{background:linear-gradient(90deg,#8a5a1e,var(--ember))}
 .charcard{display:flex;gap:18px;align-items:center;padding:18px 20px}
 .charcard .sig{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2c2622,#141416);border:2px solid var(--blood);font-family:Cinzel;font-size:30px;color:var(--bone);flex:none;box-shadow:0 0 0 4px rgba(200,100,42,.12)}
-.charcard .sig svg{display:block;width:44px;height:44px;color:#ece7df;filter:drop-shadow(0 1px 2px #000)}
+.charcard .sig .skull{display:block;width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 2px 3px #000)}
 .charcard.dead .sig svg{color:#9a9a9a}
 .charcard.dead .sig{border-color:#555;background:#1c1c1c;color:#888}
 .charcard .nm{font-family:Cinzel;font-size:22px;color:var(--bone);line-height:1.25}
@@ -119,6 +119,9 @@ input[type=checkbox]{accent-color:var(--blood)}
 .sync .minbtn{position:absolute;top:12px;right:14px;z-index:1}
 .sync:not(.min) .syncbtns{margin-top:40px}
 .sync .mini-sum{display:none;font-family:"Alegreya Sans";font-weight:500;font-size:14px;color:var(--muted);margin-left:6px}
+.cookiewarn{margin-top:10px;padding:7px 11px;border:1px solid rgba(214,150,60,.45);border-left:3px solid #d6963c;border-radius:6px;background:rgba(214,150,60,.08);font-size:13.5px;line-height:1.4;color:#e8dccb;max-width:720px}
+.cookiewarn b{color:#f0b35e}
+.sync.min .cookiewarn{margin-top:6px;padding:4px 9px;font-size:12.5px}
 .sync.min{padding:10px 16px}
 .sync.min .srow,.sync.min .syncdbg,.sync.min #syncSetup{display:none}
 .sync.min .mini-sum{display:inline}
@@ -349,6 +352,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
         <h3>Game sync <span class="mini-sum" id="syncSum"></span></h3>
         <div class="srow"><span class="dot" id="syncDot"></span><b>Characters</b><span class="note" id="syncStatus">Not synced yet.</span></div>
         <div class="srow"><span class="dot" id="gameDot"></span><b>Gear data</b><span class="note" id="gameStatus">Not loaded yet.</span></div>
+        <div class="cookiewarn" role="note"><b>⚠ Heads up:</b> clearing your browser's cookies and site data erases your Hall of the Fallen. To keep it, add this site as an exception in your browser's cookie settings, for example "Sites that can always use cookies" in Chrome or Edge.</div>
       </div>
       <div class="syncbtns">
         <div class="stack">
@@ -1227,7 +1231,7 @@ function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");cl
 const CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
 
 // skull for hardcore characters (simple original icon)
-const SKULL='<svg viewBox="1.3 -2 64 64" aria-label="Hardcore" role="img"><path fill="currentColor" d="M32 4C17.6 4 7 14.3 7 28.2c0 7.6 3.3 13.2 8.6 16.6V52a4 4 0 0 0 4 4h3.2v-6h4v6h4.4v-6h4v6h4.4v-6h4v6H47a4 4 0 0 0 4-4v-7.2c5.3-3.4 8.6-9 8.6-16.6C59.6 14.3 46.4 4 32 4Zm-11 21.5c4 0 7.2 3.1 7.2 7s-3.2 7-7.2 7-7.2-3.1-7.2-7 3.2-7 7.2-7Zm22 0c4 0 7.2 3.1 7.2 7s-3.2 7-7.2 7-7.2-3.1-7.2-7 3.2-7 7.2-7ZM32 38.5l4.2 7.3h-8.4L32 38.5Z"/></svg>';
+const SKULL='<img class="skull" src="assets/skull.webp" alt="Hardcore" title="Hardcore" width="48" height="64">';
 // mastery colours, one per class
 const MCOL={"01":"#b8402e","02":"#e0862a","03":"#9152c4","04":"#3f9a62","05":"#3d7fd6","06":"#7f8f2a","07":"#2bb3c0","08":"#7fc94e","09":"#d4a92a","10":"#a3282b"};
 const mastChips=(ms,big)=>ms&&ms.length?`<div class="mast${big?" big":""}">${ms.map(m=>`<span style="--c:${MCOL[m.id]||"#8a8a8a"}">${esc(m.name)}<i>${big?"Level ":""}${m.level}</i></span>`).join("")}</div>`:"";
