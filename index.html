@@ -201,7 +201,7 @@ body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 /* Hall of the Fallen: each character is carved into the gravestone art. Text sizes use container
    units (cqw) so everything scales with the stone and stays inside its inner panel. */
 @media (max-width:560px){.hallhead h2{font-size:24px}.hallhead h2::before,.hallhead h2::after{margin:0 8px;font-size:20px}}
-.graves{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),440px));justify-content:center;gap:22px 18px}
+.graves{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),440px));justify-content:center;gap:22px 18px}
 .grave{position:relative;container-type:inline-size;aspect-ratio:680/1020;background:url(assets/grave.webp) center/contain no-repeat;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55));text-align:center}
 .grave .gface{position:absolute;left:18.5%;right:18%;top:44%;bottom:13.4%;display:flex;flex-direction:column;align-items:center;gap:.55cqw;overflow:hidden;padding:1.6cqw 2cqw 1.8cqw;border-radius:2.4cqw;
   /* dark, slightly blurred plate so text reads cleanly over the cracked stone */
@@ -218,7 +218,7 @@ body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 .grave .mast.gm{justify-content:center;gap:1.4cqw;margin:0}
 .grave .mast.gm span{font-size:3cqw;padding:.3cqw 1.8cqw;border-radius:1cqw;gap:1cqw;text-shadow:0 1px 2px #000}
 .grave .mast.gm span i{font-size:2.6cqw}
-.grave .gk{font-size:3.1cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.25;max-width:100%}
+.grave .gk{font-size:3.1cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.25;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grave .gk span{font-size:2.5cqw;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#d98a52;margin-right:.6cqw}
 .grave .gk i{white-space:nowrap;font-style:normal;color:#bdb9b2;font-size:2.7cqw}
 .grave .ep{font-style:italic;font-size:3.4cqw;color:#f0e9de;text-shadow:0 1px 2px #000;line-height:1.3;cursor:text;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
@@ -312,6 +312,11 @@ body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 
 .locked{border:1px solid #444;background:#1a1a1a;color:#aaa;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:15px}
 
+@media (min-width:1700px){.hwrap,main,footer{max-width:1600px}}
+/* large monitors: scale the interface so text and controls aren't tiny, like a laptop at 125% */
+@media (min-width:2200px){html{zoom:1.25}}
+@media (min-width:2900px){html{zoom:1.5}}
+@media (min-width:3400px){html{zoom:1.75}}
 footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-size:13px}
 
 @media (max-width:1080px){
@@ -320,6 +325,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
   .summary{grid-template-columns:1fr 1fr}
 }
 @media (max-width:560px){
+  .sync:not(.min) .syncbtns{margin-top:14px}
   .summary{grid-template-columns:1fr}
   .row{grid-template-columns:30px minmax(0,1fr)}
   .row .tags{grid-column:2;justify-content:flex-start;flex-wrap:wrap}
@@ -1355,7 +1361,7 @@ function renderHall(){
       <div class="gd">Fell ${when}</div>
       <div class="gs one"><div><b>${devo(x).total}<small> / ${CAP}</small></b><span>Devotion points · all sources</span></div></div>
       ${x.snap&&x.snap.masteries&&x.snap.masteries.length?mastChips(x.snap.masteries,false).replace('class="mast"','class="mast gm"'):""}
-      ${gk?`<div class="gk"><span>Greatest kill</span> ${esc(gk.name)}${gk.lvl?` <i>lvl ${gk.lvl}</i>`:""}</div>`:""}
+      ${gk?`<div class="gk" title="Greatest kill: ${esc(gk.name)}${gk.lvl?" (level "+gk.lvl+")":""}"><span>Greatest kill</span> ${esc(gk.name)}${gk.lvl?` <i>lvl ${gk.lvl}</i>`:""}</div>`:""}
       <div class="ep${x.cause?"":" noep"}" data-ep="${x.id}" title="${x.cause?esc(x.cause)+" (click to edit)":"Click to edit"}">${x.cause?"“"+esc(x.cause)+"”":x.killedBy?"Killed by "+esc(nameOf(x,x.killedBy)):"Add how they fell…"}</div>
       <div class="gact">${x.snap?`<button class="btn sm" data-stats="${x.id}">View stats</button>`:""}${x.snap&&x.snap.gear?`<button class="btn sm" data-gear="${x.id}">View gear</button>`:""}${x.buildUrl?`<a class="btn sm" href="${esc(x.buildUrl)}" target="_blank" rel="noopener">View build ↗</a><button class="btn sm ghost" data-build="${x.id}" title="Change build link" aria-label="Change build link">✎</button>`:`<button class="btn sm" data-build="${x.id}">Build on Grimtools</button>`}</div>
       </div>
