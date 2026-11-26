@@ -184,6 +184,8 @@ input[type=checkbox]{accent-color:var(--blood)}
 body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 .wzbk{display:flex;align-items:center;gap:14px;margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02)}
 .wzbk>div{flex:1;display:flex;flex-direction:column;gap:2px}.wzbk .note{font-size:13px}
+.steamfb{margin-top:10px;padding:10px 12px;border:1px solid rgba(214,150,60,.45);border-left:3px solid #d6963c;border-radius:6px;background:rgba(214,150,60,.07)}
+.steamfb p{margin:0 0 8px;font-size:13.5px;line-height:1.45}
 .cavenote{margin-top:10px;padding:8px 11px;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;background:rgba(255,255,255,.03);font-size:14px;color:var(--bone)}
 .cavenote a{white-space:nowrap}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -505,8 +507,12 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <ol class="steps" id="steamSteps" hidden>
         <li>The path <code id="steamPath"></code> is copied. In the folder window, click the <b>address bar</b>, press <b>Ctrl+V</b>, then <b>Enter</b>.</li>
         <li>Open your <b>numbered Steam ID</b> folder, then <b>219990</b>, then <b>remote</b>.</li>
-        <li>Click the <b>save</b> folder once, then <b>Upload</b> (the files stay on your computer).</li>
+        <li>Click the <b>save</b> folder once, then <b>Select Folder</b> (or <b>Upload</b>). The files stay on your computer.</li>
       </ol>
+      <div class="steamfb" id="steamFallback" hidden>
+        <p><b>Chrome wouldn't connect that folder?</b> If it said the folder "contains system files", Steam is installed inside <code>Program Files</code>, and Chrome blocks live sync there. You can still load a snapshot of your saves. You'll just need to click <b>Sync again</b> after you play.</p>
+        <button type="button" class="btn red" id="steamOnce">Load a snapshot instead</button>
+      </div>
       <div class="wsmall"><button class="btn sm ghost" id="syncReconnect" hidden>Reconnect live sync</button><button class="btn sm ghost" id="syncStop" hidden>Stop live sync</button><button class="btn sm ghost" id="syncForget">Forget character copies</button></div>
     </section>
 
@@ -1668,8 +1674,9 @@ const Sync=(()=>{
       const h=await window.showDirectoryPicker(opts);
       saveHandle(h);
       await start(h);
+      return "ok";
     }
-    catch(e){if(e&&e.name!=="AbortError")status("Couldn't open the folder: "+e.message,"warn")}
+    catch(e){if(e&&e.name==="AbortError")return "aborted";status("Couldn't open the folder: "+e.message,"warn");return "error"}
   }
   async function reconnect(){
     const h=await loadHandle();if(!h){buttons("off");return}
@@ -1702,7 +1709,7 @@ const Sync=(()=>{
     render();renderDetails();
   }
   async function forgetCopies(){const list=await copies();for(const c of list)await idb("readwrite",s=>s.delete("save:"+c.folder)).catch(()=>{});return list.length}
-  return{connect,reconnect,resume,stop:()=>stop(false),loadOnce,forgetCopies,get live(){return!!dir},refresh:()=>tick(true)};
+  return{canLive,connect,reconnect,resume,stop:()=>stop(false),loadOnce,forgetCopies,get live(){return!!dir},refresh:()=>tick(true)};
 })();
 
 // explain read-only, local-only access before the browser's folder picker appears
@@ -1711,7 +1718,15 @@ const copyText=t=>navigator.clipboard?navigator.clipboard.writeText(t).then(()=>
 $("#syncConnect").onclick=()=>{S.saveSource="local";save();$("#steamSteps").hidden=true;Sync.connect("local")};
 // Steam keeps saves in Program Files, which browsers block for live folder access,
 // so this reads them through the classic folder upload input instead (files stay on the computer).
-$("#syncSteam").onclick=()=>{S.saveSource="steam";save();$("#steamPath").textContent=STEAM_PATH;$("#steamSteps").hidden=false;copyText(STEAM_PATH);$("#syncOnce").click()};
+// Steam Cloud: try live sync first (works when Steam isn't under Program Files); offer a snapshot if Chrome refuses
+$("#syncSteam").onclick=async()=>{
+  S.saveSource="steam";save();$("#steamPath").textContent=STEAM_PATH;$("#steamSteps").hidden=false;copyText(STEAM_PATH);
+  if(!Sync.canLive){$("#syncOnce").click();return}
+  $("#steamFallback").hidden=true;
+  const r=await Sync.connect("steam");
+  if(r==="ok"){S.steamLive=true;save()}else $("#steamFallback").hidden=false;
+};
+$("#steamOnce").onclick=()=>{S.steamLive=false;save();$("#steamFallback").hidden=true;copyText(STEAM_PATH);$("#syncOnce").click()};
 $("#syncForget").onclick=async()=>{const n=await Sync.forgetCopies();Sync.stop();toast(n?`Forgot ${n} saved character file${n>1?"s":""}. Your tracker progress is kept.`:"No saved character files")};
 $("#syncReconnect").onclick=()=>Sync.reconnect();
 $("#syncStop").onclick=()=>Sync.stop();
@@ -1876,7 +1891,8 @@ $("#syncSetup").onclick=openWizard;
 $("#syncAll").onclick=()=>{
   if(Sync.live){Sync.refresh();toast("Synced");return}
   // returning Steam Cloud player with gear data saved: one click straight to the saves picker
-  if(S.saveSource==="steam"&&Game.ready){copyText(STEAM_PATH);$("#syncOnce").click();return}
+  if(S.saveSource==="steam"&&S.steamLive&&!$("#syncReconnect").hidden){Sync.reconnect();return}
+  if(S.saveSource==="steam"&&!S.steamLive&&Game.ready){copyText(STEAM_PATH);$("#syncOnce").click();return}
   if(S.saveSource==="local"&&Game.ready&&!$("#syncReconnect").hidden){Sync.reconnect();return}
   openWizard();
 };
