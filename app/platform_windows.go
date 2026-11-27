@@ -283,6 +283,12 @@ func maybeInstall() bool {
 	if strings.EqualFold(filepath.Clean(exe), filepath.Clean(inst)) {
 		return false
 	}
+	// Already installed and this download isn't newer: just open the installed app
+	if have := regString(syscall.HKEY_CURRENT_USER, uninstallKey, "DisplayVersion", 0); isFile(inst) && have != "" && !newer(Version, have) {
+		if err := exec.Command(inst).Start(); err == nil {
+			return true
+		}
+	}
 	quitRunningCopy()
 	os.MkdirAll(filepath.Dir(inst), 0o755)
 	var cerr error
@@ -382,7 +388,7 @@ func shortcutPaths() []string {
 func makeShortcuts(target string) {
 	var sb strings.Builder
 	sb.WriteString("$s=New-Object -ComObject WScript.Shell;")
-	for _, p := range shortcutPaths() {
+	for _, p := range shortcutPaths()[:1] { // Start menu only: no desktop shortcut
 		sb.WriteString("$l=$s.CreateShortcut(" + psQuote(p) + ");$l.TargetPath=" + psQuote(target) +
 			";$l.WorkingDirectory=" + psQuote(filepath.Dir(target)) + ";$l.IconLocation=" + psQuote(target+",0") +
 			";$l.Description='Grim Dawn character and shrine tracker';$l.Save();")

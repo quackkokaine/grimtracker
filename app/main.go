@@ -42,7 +42,7 @@ const (
 )
 
 // Version of the app; build.sh publishes it in download/version.json for self-updates.
-var Version = "1.2.0"
+var Version = "1.2.1"
 
 // where the site and app updates come from (GT_SITE overrides it for testing)
 var SiteURL = func() string {

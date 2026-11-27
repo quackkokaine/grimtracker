@@ -742,6 +742,17 @@ const GDSave = (() => {
         guard(r, end); if (r.pos + 8 <= end) { st.uniqueItems = r.int(); st.randomizedItems = r.int(); }
         guard(r, end);
       } catch (e) { r.restore(s2); delete st.uniqueItems; delete st.randomizedItems; delete st.souls; delete st.essence; }
+    } else if (id === 5 || id === 6 || id === 7) {
+      // 5: respawn points found + the one in use, 6: rifts found, 7: map markers found (per difficulty).
+      // Lists grow in the order things were found, so their ends show where the character has been lately.
+      const v = r.int(), lists = [];
+      for (let i = 0; i < 3; i++) {
+        const n = r.int(); if (n > 20000) throw new Error("bad list size " + n);
+        const list = []; for (let j = 0; j < n; j++) list.push(r.uid()); lists.push(list);
+      }
+      const key = id === 5 ? "respawns" : id === 6 ? "rifts" : "markers";
+      out[key] = { version: v, lists };
+      if (id === 5) out.respawns.current = [r.uid(), r.uid(), r.uid()];
     } else if (id === 17) {
       out.shrineVersion = r.int();
       out.shrineLists = [];

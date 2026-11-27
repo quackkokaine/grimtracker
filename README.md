@@ -28,7 +28,7 @@ The GrimTracker app gets around that: it runs the same site in its own window an
 saves itself, so the tracker updates live while you play, wherever the saves are.
 
 - **Download:** https://quackkokaine.github.io/grimtracker/download/GrimTracker.exe. Run it once to install it for your user,
-  no admin needed. It adds Start menu and desktop shortcuts and an entry in Settings > Apps for removal.
+  no admin needed. It adds a Start menu shortcut and an entry in Settings > Apps for removal.
 - **Read-only:** it only reads `player.gdc` files and the game's item database and text. It never changes saves.
 - **Your data:** progress and the Hall of the Fallen are kept in `%APPDATA%\GrimTracker` with a dated backup each day.
 - **Always current:** it downloads the latest version of this site when it starts, with a built-in copy for offline use.
