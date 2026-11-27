@@ -42,7 +42,7 @@ const (
 )
 
 // Version of the app; build.sh publishes it in download/version.json for self-updates.
-var Version = "1.1.0"
+var Version = "1.2.0"
 
 // where the site and app updates come from (GT_SITE overrides it for testing)
 var SiteURL = func() string {
@@ -89,7 +89,11 @@ func main() {
 	}
 	os.MkdirAll(dataDir, 0o755)
 	siteDir = filepath.Join(dataDir, "site")
-	lf, _ := os.OpenFile(filepath.Join(dataDir, "grimtracker.log"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	logName := filepath.Join(dataDir, "grimtracker.log")
+	if st, err := os.Stat(logName); err == nil && st.Size() > 512<<10 {
+		os.Rename(logName, logName+".1") // keep the log small
+	}
+	lf, _ := os.OpenFile(logName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if lf != nil {
 		logger = log.New(lf, "", log.LstdFlags)
 	} else {
@@ -114,6 +118,14 @@ func main() {
 	}
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", Port))
+	reuseWindow := hasArg(args, "--reuse-window") // restarted by the reload button: the window is already open
+	for i := 0; err != nil && reuseWindow && i < 60; i++ {
+		time.Sleep(250 * time.Millisecond) // wait for the old version to let go of the port
+		ln, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", Port))
+	}
+	if reuseWindow {
+		noWindow = true
+	}
 	if err != nil {
 		// already running: just open another window onto it
 		logger.Printf("port busy, assuming GrimTracker is already running: %v", err)
@@ -408,6 +420,7 @@ func routes() http.Handler {
 	mux.HandleFunc("/api/state", apiState)
 	mux.HandleFunc("/api/autostart", apiAutostart)
 	mux.HandleFunc("/api/open", apiOpen)
+	mux.HandleFunc("/api/update", apiUpdate)
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
 	mux.HandleFunc("/api/quit", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -822,6 +835,43 @@ func selfUpdate() bool {
 		return false
 	}
 	os.Remove(exe + ".old") // left over from the last update
+	if v := installUpdate(exe); v != "" {
+		if err := startDetached(exe, "--updated-from="+Version); err != nil {
+			logger.Printf("couldn't start the new version: %v", err)
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+// The reload button: get the newest site, and if there's a newer app, install it and hand the
+// open window over to it.
+func apiUpdate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	refreshSite(8 * time.Second)
+	out := map[string]string{"app": "", "site": siteSource}
+	if canSelfUpdate() {
+		if exe, err := os.Executable(); err == nil {
+			os.Remove(exe + ".old")
+			if v := installUpdate(exe); v != "" {
+				if err := startDetached(exe, "--updated-from="+Version, "--reuse-window"); err == nil {
+					out["app"] = v
+					go func() { time.Sleep(300 * time.Millisecond); shutdown("updating to " + v) }()
+				} else {
+					logger.Printf("couldn't start the new version: %v", err)
+				}
+			}
+		}
+	}
+	writeJSON(w, out)
+}
+
+// installUpdate downloads a newer exe (if any) over this one and returns its version, or "".
+func installUpdate(exe string) string {
 	var info struct {
 		Version string `json:"version"`
 		SHA256  string `json:"sha256"`
@@ -831,44 +881,40 @@ func selfUpdate() bool {
 	resp, err := cl.Get(SiteURL + "download/version.json?t=" + fmt.Sprint(time.Now().Unix()))
 	if err != nil {
 		logger.Printf("update check skipped: %v", err)
-		return false
+		return ""
 	}
 	err = json.NewDecoder(io.LimitReader(resp.Body, 1<<16)).Decode(&info)
 	resp.Body.Close()
 	if err != nil || resp.StatusCode != 200 || !newer(info.Version, Version) || info.File == "" || strings.Contains(info.File, "/") || strings.Contains(info.File, "..") {
-		return false
+		return ""
 	}
 	logger.Printf("updating %s -> %s", Version, info.Version)
 	cl.Timeout = 2 * time.Minute
 	resp, err = cl.Get(SiteURL + "download/" + info.File + "?v=" + info.Version)
 	if err != nil {
 		logger.Printf("update download failed: %v", err)
-		return false
+		return ""
 	}
 	b, err := io.ReadAll(io.LimitReader(resp.Body, 128<<20))
 	resp.Body.Close()
 	sum := sha256.Sum256(b)
 	if err != nil || resp.StatusCode != 200 || len(b) < 1<<20 || !bytes.HasPrefix(b, []byte(exeMagic)) || !strings.EqualFold(hex.EncodeToString(sum[:]), info.SHA256) {
 		logger.Printf("update rejected (download incomplete or checksum mismatch)")
-		return false
+		return ""
 	}
 	if err := os.WriteFile(exe+".new", b, 0o755); err != nil {
 		logger.Printf("update write failed: %v", err)
-		return false
+		return ""
 	}
 	if err := os.Rename(exe, exe+".old"); err != nil {
 		os.Remove(exe + ".new")
 		logger.Printf("update swap failed: %v", err)
-		return false
+		return ""
 	}
 	if err := os.Rename(exe+".new", exe); err != nil {
 		os.Rename(exe+".old", exe)
 		logger.Printf("update swap failed: %v", err)
-		return false
+		return ""
 	}
-	if err := startDetached(exe, "--updated-from="+Version); err != nil {
-		logger.Printf("couldn't start the new version: %v", err)
-		return false
-	}
-	return true
+	return info.Version
 }

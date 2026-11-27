@@ -197,6 +197,12 @@ body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 .apppanel .arow label{font:inherit;letter-spacing:0;text-transform:none;color:inherit;margin:0}
 .appad{margin-top:10px}.appad .btn{margin-left:6px}
 .app .cookiewarn,.app .safe,.app .appad,.app #wzBackupNote{display:none}
+.appreload{display:none;padding:8px 10px;line-height:0;margin-left:8px}
+.appreload svg{width:20px;height:20px}
+.app .appreload{display:inline-flex}
+.app .charbar,.app #backLink{margin-left:auto}
+.appreload.spin svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .cavenote{margin-top:10px;padding:8px 11px;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;background:rgba(255,255,255,.03);font-size:14px;color:var(--bone)}
 .cavenote a{white-space:nowrap}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -361,6 +367,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <a class="btn red" id="hallLink" href="#fallen">† Hall of the Fallen <span class="hc" id="hallCount"></span></a>
       <button class="btn ghost" id="backupBtn">Backup</button>
     </div>
+    <button class="btn ghost appreload" id="appReload" title="Reload GrimTracker and check for updates" aria-label="Reload and check for updates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
   </div>
 </header>
 
@@ -1430,6 +1437,13 @@ const AppMode=(()=>{
     if(!r.ok){toast("Couldn't change that: "+(await r.text()).trim());e.target.checked=!e.target.checked;return}
     toast(e.target.checked?"GrimTracker will open when Windows starts":"GrimTracker won't open with Windows")};
   document.querySelectorAll("[data-appopen]").forEach(b=>b.onclick=()=>appFetch("/api/open?what="+b.dataset.appopen,{method:"POST"}));
+  // reload the app: fetch the newest site and, if there's a newer app, install it and restart into it
+  $("#appReload").onclick=async()=>{const b=$("#appReload");if(b.classList.contains("spin"))return;b.classList.add("spin");appFlush(false);
+    try{const r=await appFetch("/api/update",{method:"POST"});const u=await r.json();
+      if(u.app){toast(`Updating GrimTracker to v${u.app}…`);const from=APP.version;
+        for(let i=0;i<60;i++){await new Promise(z=>setTimeout(z,500));try{const x=await appFetch("/api/info");if(x.ok&&(await x.json()).version!==from)break}catch(e){}}}
+    }catch(e){}
+    location.reload()};
   return{start};
 })();
 if(APP)AppMode.start();else{Sync.resume();Game.resume()}
