@@ -13,7 +13,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,12 +36,21 @@ import (
 )
 
 const (
-	Version  = "1.0.0"
 	Port     = 47819
-	SiteURL  = "https://quackkokaine.github.io/grimtracker/"
 	AppName  = "GrimTracker"
 	idleQuit = 60 * time.Second // quit this long after the last window stops talking to us
 )
+
+// Version of the app; build.sh publishes it in download/version.json for self-updates.
+var Version = "1.1.0"
+
+// where the site and app updates come from (GT_SITE overrides it for testing)
+var SiteURL = func() string {
+	if u := os.Getenv("GT_SITE"); u != "" {
+		return u
+	}
+	return "https://quackkokaine.github.io/grimtracker/"
+}()
 
 //go:embed site
 var embedded embed.FS
@@ -95,6 +106,13 @@ func main() {
 		}
 	}
 
+	updatedFrom := argValue(args, "--updated-from=")
+	if !noWindow && canSelfUpdate() && !portBusy() {
+		if selfUpdate() {
+			return // the new version has been started
+		}
+	}
+
 	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", Port))
 	if err != nil {
 		// already running: just open another window onto it
@@ -111,6 +129,7 @@ func main() {
 		refreshSite(4 * time.Second)
 	}
 
+	justUpdatedFrom = updatedFrom
 	srv := &http.Server{Handler: guard(routes()), ReadHeaderTimeout: 10 * time.Second}
 	go srv.Serve(ln)
 	logger.Printf("serving on %s", appURL())
@@ -416,8 +435,11 @@ func apiInfo(w http.ResponseWriter, r *http.Request) {
 	cfgMu.Unlock()
 	out := map[string]any{
 		"app": true, "version": Version, "roots": roots, "saveRoot": c.SaveRoot,
-		"game": map[string]any{"path": gd, "found": ok, "custom": c.GameDir != ""},
+		"game":      map[string]any{"path": gd, "found": ok, "custom": c.GameDir != ""},
 		"autostart": autostartEnabled(), "dataDir": dataDir, "siteFrom": siteSource,
+	}
+	if justUpdatedFrom != "" {
+		out["updatedFrom"] = justUpdatedFrom
 	}
 	if act != nil {
 		out["active"] = act.ID
@@ -685,7 +707,8 @@ func serveSite(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-var assetRef = regexp.MustCompile(`(?:src|href)=["'](assets/[^"'?#]+)`)
+// any assets/… file the page mentions: in tags, CSS url() or scripts
+var assetRef = regexp.MustCompile(`(assets/[A-Za-z0-9_./-]+\.(?:webp|png|jpe?g|gif|svg|ico|css|js|json|woff2?))`)
 
 // Download the current website so the app always shows the latest version. Falls back to the
 // last downloaded copy, then to the copy built into the app, when offline.
@@ -748,4 +771,104 @@ func fatal(msg string) {
 	}
 	messageBox(AppName, msg)
 	os.Exit(1)
+}
+
+/* ---------- updating the app itself ---------- */
+
+var justUpdatedFrom string
+
+func argValue(args []string, prefix string) string {
+	for _, a := range args {
+		if strings.HasPrefix(a, prefix) {
+			return strings.TrimPrefix(a, prefix)
+		}
+	}
+	return ""
+}
+
+func portBusy() bool {
+	c, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", Port), 300*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	c.Close()
+	return true
+}
+
+// newer reports whether version a is newer than b ("1.10.0" > "1.9.2").
+func newer(a, b string) bool {
+	pa, pb := strings.Split(a, "."), strings.Split(b, ".")
+	for i := 0; i < len(pa) || i < len(pb); i++ {
+		var x, y int
+		if i < len(pa) {
+			fmt.Sscan(pa[i], &x)
+		}
+		if i < len(pb) {
+			fmt.Sscan(pb[i], &y)
+		}
+		if x != y {
+			return x > y
+		}
+	}
+	return false
+}
+
+// On start, check the site for a newer GrimTracker.exe. If there is one, download it, check
+// its SHA-256 against the published one, swap it in (Windows lets a running exe be renamed),
+// and start it. Any problem just means this version keeps running.
+func selfUpdate() bool {
+	exe, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	os.Remove(exe + ".old") // left over from the last update
+	var info struct {
+		Version string `json:"version"`
+		SHA256  string `json:"sha256"`
+		File    string `json:"file"`
+	}
+	cl := &http.Client{Timeout: 4 * time.Second}
+	resp, err := cl.Get(SiteURL + "download/version.json?t=" + fmt.Sprint(time.Now().Unix()))
+	if err != nil {
+		logger.Printf("update check skipped: %v", err)
+		return false
+	}
+	err = json.NewDecoder(io.LimitReader(resp.Body, 1<<16)).Decode(&info)
+	resp.Body.Close()
+	if err != nil || resp.StatusCode != 200 || !newer(info.Version, Version) || info.File == "" || strings.Contains(info.File, "/") || strings.Contains(info.File, "..") {
+		return false
+	}
+	logger.Printf("updating %s -> %s", Version, info.Version)
+	cl.Timeout = 2 * time.Minute
+	resp, err = cl.Get(SiteURL + "download/" + info.File + "?v=" + info.Version)
+	if err != nil {
+		logger.Printf("update download failed: %v", err)
+		return false
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 128<<20))
+	resp.Body.Close()
+	sum := sha256.Sum256(b)
+	if err != nil || resp.StatusCode != 200 || len(b) < 1<<20 || !bytes.HasPrefix(b, []byte(exeMagic)) || !strings.EqualFold(hex.EncodeToString(sum[:]), info.SHA256) {
+		logger.Printf("update rejected (download incomplete or checksum mismatch)")
+		return false
+	}
+	if err := os.WriteFile(exe+".new", b, 0o755); err != nil {
+		logger.Printf("update write failed: %v", err)
+		return false
+	}
+	if err := os.Rename(exe, exe+".old"); err != nil {
+		os.Remove(exe + ".new")
+		logger.Printf("update swap failed: %v", err)
+		return false
+	}
+	if err := os.Rename(exe+".new", exe); err != nil {
+		os.Rename(exe+".old", exe)
+		logger.Printf("update swap failed: %v", err)
+		return false
+	}
+	if err := startDetached(exe, "--updated-from="+Version); err != nil {
+		logger.Printf("couldn't start the new version: %v", err)
+		return false
+	}
+	return true
 }

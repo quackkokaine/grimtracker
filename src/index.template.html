@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GrimTracker · Grim Dawn character and shrine tracker</title>
 <link rel="icon" href="assets/logo.webp">
+<link rel="apple-touch-icon" href="assets/app-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -715,7 +716,7 @@ const APP_DL="https://quackkokaine.github.io/grimtracker/download/GrimTracker.ex
 const appXhr=(u)=>{try{const x=new XMLHttpRequest();x.open("GET",u,false);x.setRequestHeader("X-GT","1");x.send();return x}catch(e){return null}};
 let APP=(()=>{if(location.hostname!=="127.0.0.1"||location.port!=="47819")return null;const x=appXhr("/api/info");try{return x&&x.status===200?JSON.parse(x.responseText):null}catch(e){return null}})();
 const appFetch=(u,o={})=>fetch(u,{...o,headers:{"X-GT":"1",...(o.body?{"Content-Type":"application/json"}:{}),...(o.headers||{})}});
-if(APP)document.documentElement.classList.add("app");
+if(APP){document.documentElement.classList.add("app");const ic=document.querySelector('link[rel="icon"]');if(ic)ic.href="assets/app-icon.png"}
 let S;
 function blank(){return{chars:[],active:null,diff:"normal",exp:{AoM:true,FG:true,FoA:true},hideDone:false,fightOnly:false,spoilers:false,sel:null,open:{}}}
 function load(){try{let t=null;if(APP){const x=appXhr("/api/state");if(x&&x.status===200&&x.responseText)t=x.responseText}t=t||localStorage.getItem(KEY);S=t?Object.assign(blank(),JSON.parse(t)):blank()}catch(e){S=blank()}}
@@ -958,23 +959,6 @@ $("#delConfirm").onclick=()=>{
   if(S.active===x.id)S.active=(S.chars.find(c=>c.status!=="fallen")||S.chars[0]||{}).id||null;
   save();render();toast(`${x.name} has been laid to rest`);
 };
-function seedSample(){
-  if(S.sampleSeeded){const old=S.chars.find(c=>c.sample);if(old&&(!old.snap||!old.snap.gear||!old.gearNames||!old.gearNames.equipment[0].sections)){S.sampleSeeded=false;S.chars=S.chars.filter(c=>c!==old)}else return}S.sampleSeeded=true;
-  const done={normal:{},elite:{},ultimate:{}},t=Date.now()-1000*60*60*24*3;
-  SHRINES.filter(s=>s.req.normal!=null).slice(0,44).forEach(s=>done.normal[s.id]=t);
-  SHRINES.filter(s=>s.req.elite!=null).slice(0,11).forEach(s=>done.elite[s.id]=t);
-  const snap={className:"Warlord",masteries:[{id:"01",name:"Soldier",level:50},{id:"09",name:"Oathkeeper",level:32}],level:67,experience:48210377,physique:642,cunning:298,spirit:310,health:5240,energy:1610,devotionUnlocked:55,unspentSkills:0,unspentAttributes:0,iron:1824550,tributes:212,lastDifficulty:"Elite",
-    stats:{playTime:171240,deaths:1,kills:31508,xpFromKills:30122950,healthPotions:214,energyPotions:61,maxLevel:67,hitsReceived:88412,hitsInflicted:301877,critsInflicted:38251,critsReceived:5120,greatestDamageDone:48211,greatestDamageReceived:9874,championKills:1622,heroKills:241,itemsCrafted:18,relicsCrafted:7,transcendentRelicsCrafted:2,mythicalRelicsCrafted:0,shrinesRestored:55,oneShotChests:96,loreNotes:142,bossKills:[64,31,0],crucibleWave:0,crucibleScore:0,uniqueItems:388,randomizedItems:2917,
-      perDifficulty:[{greatestMonster:"Loghorrean",greatestMonsterLevel:58,lastMonsterHitBy:"Bloodthirster"},{greatestMonster:"Grava'thul",greatestMonsterLevel:72,lastMonsterHitBy:"Ravager of Minds"},{greatestMonster:"",lastMonsterHitBy:""}]}};
-  const G=[["Head","Legendary","Mythical Warborn Helm",94,"Warborn Regalia"],["Amulet","Epic","Pendant of the Oathsworn",80],["Chest","Legendary","Mythical Warborn Cuirass",94,"Warborn Regalia"],["Legs","Rare","Tenacious Runed Legplates of Valor",72],["Feet","Epic","Ironclad Greaves",75],["Hands","Rare","Stalwart Gauntlets of the Bulwark",70],["Ring","Epic","Seal of the Vigilant",68],["Ring","Magical","Fiery Band of Might",60],["Belt","Legendary","Mythical Girdle of the Shieldbearer",90],["Shoulders","Legendary","Mythical Warborn Pauldrons",94,"Warborn Regalia"],["Medal","Epic","Badge of the Faithful",75],["Relic","Legendary","Oath of Iron",84]];
-  snap.gear={useAlt:false,equipment:G.map((g,i)=>({base:"records/items/example/slot"+i+".dbr"})),weapons:[[{base:"records/items/example/sword.dbr"},{base:"records/items/example/shield.dbr"}],[null,null]]};
-  const SS={Head:["412 Armor","+28 Physique","+6% Health","+18% Fire Resistance","+2 to all skills in Soldier"],Amulet:["+22 Physique","+5% Defensive Ability","+20% Lightning Resistance","+1 to all skills in Oathkeeper"],Chest:["640 Armor","+35 Physique","+8% Health","+15% Physical Damage","+2 to Shield Training"],Legs:["398 Armor","+24% Cold Resistance","+30 Health Regenerated per Second"],Feet:["305 Armor","+12% Movement Speed","+25% Acid Resistance"],Hands:["276 Armor","+5% Attack Speed","+40 Offensive Ability"],Ring:["+14% Physical Damage","+12% Chaos Resistance"],Belt:["356 Armor","+18 Physique","+22% Bleeding Resistance","+6% Armor"],Shoulders:["388 Armor","+20% Aether Resistance","+1 to all skills in Soldier"],Medal:["+30 Defensive Ability","+15% Vitality Resistance"],Relic:["+8% Physical Damage","+5% Health","Grants skill: Iron Resolve"]};
-  const ex=(g,cls)=>({base:"",known:true,name:g[2],rarity:g[1],level:g[3],req:g[3]-2,set:g[4]||"",cls,wiki:g[2].replace(/^Mythical /,"").replace(/^(Fiery|Tenacious|Stalwart) /,"").replace(/ of (Might|Valor|the Bulwark)$/,""),component:g[0]==="Chest"?"Ancient Armor Plate":"",augment:"",
-    sections:[{title:"",lines:SS[g[0]]||[]}].concat(g[0]==="Chest"?[{title:"Component: Ancient Armor Plate",lines:["+8% Physical Resistance","+5% Armor"]}]:[])});
-  const gearNames={at:t,equipment:G.map(g=>ex(g,"")),weapons:[[Object.assign(ex(["","Legendary","Mythical Blade of the Vanguard",94]),{sections:[{title:"",lines:["412-560 Physical Damage","Attack speed: Fast","+120% Physical Damage","+25% Internal Trauma Damage","+3 to Blitz"]}]}),Object.assign(ex(["","Epic","Bulwark of the Unyielding",82]),{sections:[{title:"",lines:["28% Chance to Block 1,840 Damage","0.6 Second Shield Recovery","620 Armor","+18% Pierce Resistance"]}]})],[null,null]]};
-  S.chars.push({id:"sample-"+uid(),sample:true,snap,gearNames,name:"Exemplar",cls:"Warlord (Soldier + Oathkeeper)",level:67,deathLevel:67,status:"fallen",created:t-1000*60*60*24*20,diedAt:t,cause:"Slain by Ravager of Minds, Elite Act 4",done,found:{normal:{},elite:{},ultimate:{}},bonus:0});
-  save();
-}
 $("#hallSort").onchange=e=>{S.hallSort=e.target.value;save();renderHall()};
 
 // Shrines inside caves and dungeons -> the world-map entrance that leads to them (Grimtools object ids).
@@ -1399,7 +1383,8 @@ $("#syncLayout").onchange=e=>{S.syncLayout=e.target.value;save();Sync.refresh()}
 
 load();
 $("#syncLayout").value=S.syncLayout||"";
-seedSample();
+// the old example grave is no longer shown
+if(S.chars.some(c=>c.sample)){S.chars=S.chars.filter(c=>!c.sample);delete S.sampleSeeded;save()}
 setSyncMin(!!S.syncMin);
 route();
 /* ---------- DESKTOP APP ----------
@@ -1431,7 +1416,9 @@ const AppMode=(()=>{
   async function start(){
     $("#appPanel").hidden=false;$("#wzStep1").hidden=true;$("#wzStep2").hidden=true;
     $("#bkNote").textContent="The app already saves your progress on this PC every day. Use this to move it to another PC or keep an extra copy.";
-    render_();startSaves();await startGame();
+    render_();startSaves();
+    if(APP.updatedFrom&&!AppMode._told){AppMode._told=1;toast(`GrimTracker updated to v${APP.version}`)}
+    await startGame();
   }
   $("#appSaves").onchange=async e=>{await appFetch("/api/config",{method:"POST",body:JSON.stringify({saveRoot:e.target.value})});await info();render_();startSaves()};
   $("#appGameSet").onclick=async()=>{const v=$("#appGameIn").value.trim();if(!v)return;

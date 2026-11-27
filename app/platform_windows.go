@@ -30,17 +30,17 @@ var (
 )
 
 const (
-	keyWow64_32   = 0x0200
-	keyWow64_64   = 0x0100
-	createNoWin   = 0x08000000
-	mbYesNo       = 0x00000004
-	mbIconInfo    = 0x00000040
-	mbIconWarn    = 0x00000030
-	mbIconQuest   = 0x00000020
-	idYes         = 6
-	runKey        = `Software\Microsoft\Windows\CurrentVersion\Run`
-	uninstallKey  = `Software\Microsoft\Windows\CurrentVersion\Uninstall\GrimTracker`
-	runValueName  = "GrimTracker"
+	keyWow64_32  = 0x0200
+	keyWow64_64  = 0x0100
+	createNoWin  = 0x08000000
+	mbYesNo      = 0x00000004
+	mbIconInfo   = 0x00000040
+	mbIconWarn   = 0x00000030
+	mbIconQuest  = 0x00000020
+	idYes        = 6
+	runKey       = `Software\Microsoft\Windows\CurrentVersion\Run`
+	uninstallKey = `Software\Microsoft\Windows\CurrentVersion\Uninstall\GrimTracker`
+	runValueName = "GrimTracker"
 )
 
 type guid struct {
@@ -414,3 +414,13 @@ func uninstall() {
 	cmd.Start()
 	msgBox(AppName, "GrimTracker has been removed.", mbIconInfo)
 }
+
+const exeMagic = "MZ"
+
+// only the installed copy updates itself
+func canSelfUpdate() bool {
+	exe, err := os.Executable()
+	return err == nil && strings.EqualFold(filepath.Clean(exe), filepath.Clean(installedExe()))
+}
+
+func startDetached(exe string, args ...string) error { return exec.Command(exe, args...).Start() }

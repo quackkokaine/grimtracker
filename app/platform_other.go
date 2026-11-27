@@ -8,6 +8,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -43,3 +44,13 @@ func messageBox(title, text string)         { fmt.Fprintln(os.Stderr, title+": "
 func autostartEnabled() bool                { return autostartOn }
 func setAutostart(on bool) error            { autostartOn = on; return nil }
 func maybeInstall() bool                    { return false }
+
+const exeMagic = "\x7fELF"
+
+func canSelfUpdate() bool { return os.Getenv("GT_SELFUPDATE") != "" }
+
+func startDetached(exe string, args ...string) error {
+	c := exec.Command(exe, args...)
+	c.Stdout, c.Stderr = os.Stdout, os.Stderr
+	return c.Start()
+}

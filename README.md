@@ -32,6 +32,7 @@ saves itself, so the tracker updates live while you play, wherever the saves are
 - **Read-only:** it only reads `player.gdc` files and the game's item database and text. It never changes saves.
 - **Your data:** progress and the Hall of the Fallen are kept in `%APPDATA%\GrimTracker` with a dated backup each day.
 - **Always current:** it downloads the latest version of this site when it starts, with a built-in copy for offline use.
+  It also updates itself: when `download/version.json` lists a newer version, it downloads the new exe, checks its SHA-256 and restarts into it.
 - **Window:** it opens in Microsoft Edge (or Chrome) app mode with its own profile, so clearing your browser's data doesn't affect it.
 - The exe isn't code-signed yet, so Windows SmartScreen may warn the first time: choose **More info > Run anyway**.
 
