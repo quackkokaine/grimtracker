@@ -186,6 +186,16 @@ body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 .wzbk>div{flex:1;display:flex;flex-direction:column;gap:2px}.wzbk .note{font-size:13px}
 .steamfb{margin-top:10px;padding:10px 12px;border:1px solid rgba(214,150,60,.45);border-left:3px solid #d6963c;border-radius:6px;background:rgba(214,150,60,.07)}
 .steamfb p{margin:0 0 8px;font-size:13.5px;line-height:1.45}
+.apppanel .arow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.apppanel .arow>b,.apppanel .arow>label{min-width:96px}
+.apppanel select,.apppanel input:not([type=checkbox]){flex:1;min-width:220px;background:#151618;border:1px solid var(--line);color:var(--bone);border-radius:6px;padding:7px 9px;font:inherit;font-size:14px}
+.apppanel .apath{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;word-break:break-all;flex:1}
+.apppanel .acheck{display:flex;align-items:center;justify-content:flex-start;gap:9px;margin:14px 0 6px;font-size:15px;cursor:pointer;width:auto}
+.apppanel .acheck input{width:18px;height:18px;flex:none;margin:0;accent-color:var(--ember)}
+.apppanel .arow>b{font-size:15px}
+.apppanel .arow label{font:inherit;letter-spacing:0;text-transform:none;color:inherit;margin:0}
+.appad{margin-top:10px}.appad .btn{margin-left:6px}
+.app .cookiewarn,.app .safe,.app .appad,.app #wzBackupNote{display:none}
 .cavenote{margin-top:10px;padding:8px 11px;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;background:rgba(255,255,255,.03);font-size:14px;color:var(--bone)}
 .cavenote a{white-space:nowrap}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -492,6 +502,17 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <p class="note">Your browser may ask something like <i>“Let this site view files?”</i> or call it “uploading”. Both are the read-only access described above.</p>
     </details>
 
+    <section class="wstep apppanel" id="appPanel" hidden>
+      <h4>GrimTracker app <span class="opt" id="appVer"></span></h4>
+      <div class="arow"><b><label for="appSaves">Saves</label></b><select id="appSaves"></select><button type="button" class="btn sm ghost" data-appopen="saves">Open folder</button></div>
+      <p class="note apath" id="appSavePath"></p>
+      <p class="note">Updates live while you play, Steam Cloud saves included. “Automatic” uses whichever save folder you played most recently.</p>
+      <div class="arow"><b>Game folder</b><span class="note apath" id="appGamePath"></span><button type="button" class="btn sm ghost" data-appopen="game">Open folder</button></div>
+      <div class="arow"><input id="appGameIn" placeholder="Paste a different Grim Dawn folder, e.g. D:\Games\Grim Dawn"><button type="button" class="btn sm" id="appGameSet">Use this folder</button><button type="button" class="btn sm ghost" id="appGameAuto">Find automatically</button></div>
+      <label class="acheck"><input type="checkbox" id="appAuto"> Start GrimTracker with Windows</label>
+      <div class="arow"><span class="note">Your progress and Hall of the Fallen are saved on this PC, with a backup each day, so clearing browser data can't erase them.</span><button type="button" class="btn sm ghost" data-appopen="data">Open data folder</button></div>
+    </section>
+
     <section class="wstep" id="wzStep1">
       <h4><span class="num">1</span>Your characters <span class="wst" id="wzSaves"></span></h4>
       <div class="wchoices">
@@ -509,8 +530,9 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
         <li>Open your <b>numbered Steam ID</b> folder, then <b>219990</b>, then <b>remote</b>.</li>
         <li>Click the <b>save</b> folder once, then <b>Select Folder</b> (or <b>Upload</b>). The files stay on your computer.</li>
       </ol>
+      <p class="note appad">Steam Cloud saves on Windows? The <b>GrimTracker app</b> reads them live, with no re-syncing. <a class="btn sm" href="https://quackkokaine.github.io/grimtracker/download/GrimTracker.exe">Download for Windows</a></p>
       <div class="steamfb" id="steamFallback" hidden>
-        <p><b>Chrome wouldn't connect that folder?</b> If it said the folder "contains system files", Steam is installed inside <code>Program Files</code>, and Chrome blocks live sync there. You can still load a snapshot of your saves. You'll just need to click <b>Sync again</b> after you play.</p>
+        <p><b>Chrome wouldn't connect that folder?</b> If it said the folder "contains system files", Steam is installed inside <code>Program Files</code>, and Chrome blocks live sync there. You can still load a snapshot of your saves. You'll just need to click <b>Sync again</b> after you play. For automatic updates, use the <a href="https://quackkokaine.github.io/grimtracker/download/GrimTracker.exe">GrimTracker app for Windows</a>.</p>
         <button type="button" class="btn red" id="steamOnce">Load a snapshot instead</button>
       </div>
       <div class="wsmall"><button class="btn sm ghost" id="syncReconnect" hidden>Reconnect live sync</button><button class="btn sm ghost" id="syncStop" hidden>Stop live sync</button><button class="btn sm ghost" id="syncForget">Forget character copies</button></div>
@@ -523,7 +545,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <div class="wsmall"><button class="btn red" id="gamePick">Pick game folder</button><button class="btn sm ghost" id="gameConnect" hidden>Connect live instead</button><button class="btn sm ghost" id="gameReconnect" hidden>Reconnect</button><button class="btn sm ghost" id="gameStop" hidden>Forget gear data</button></div>
     </section>
 
-    <div class="wzbk"><div><b>Backup</b><span class="note">Your Hall of the Fallen and tracker progress live only in this browser. Save a copy so clearing browser data can't erase them.</span></div><button type="button" class="btn sm ghost" id="wzBackup">Backup / restore</button></div>
+    <div class="wzbk"><div><b>Backup</b><span class="note" id="bkNote">Your Hall of the Fallen and tracker progress live only in this browser. Save a copy so clearing browser data can't erase them.</span></div><button type="button" class="btn sm ghost" id="wzBackup">Backup / restore</button></div>
     <div class="acts"><span class="note" id="wzDone"></span><button type="button" class="btn" data-close>Done</button></div>
   </div>
 </div>
@@ -1225,10 +1247,21 @@ function devo(c){
 
 /* ---------- STATE ---------- */
 const KEY="gdhc-tracker-v1";
+// Running inside the GrimTracker desktop app? (it serves this page from 127.0.0.1:47819)
+const APP_DL="https://quackkokaine.github.io/grimtracker/download/GrimTracker.exe";
+const appXhr=(u)=>{try{const x=new XMLHttpRequest();x.open("GET",u,false);x.setRequestHeader("X-GT","1");x.send();return x}catch(e){return null}};
+let APP=(()=>{if(location.hostname!=="127.0.0.1"||location.port!=="47819")return null;const x=appXhr("/api/info");try{return x&&x.status===200?JSON.parse(x.responseText):null}catch(e){return null}})();
+const appFetch=(u,o={})=>fetch(u,{...o,headers:{"X-GT":"1",...(o.body?{"Content-Type":"application/json"}:{}),...(o.headers||{})}});
+if(APP)document.documentElement.classList.add("app");
 let S;
 function blank(){return{chars:[],active:null,diff:"normal",exp:{AoM:true,FG:true,FoA:true},hideDone:false,fightOnly:false,spoilers:false,sel:null,open:{}}}
-function load(){try{const t=localStorage.getItem(KEY);S=t?Object.assign(blank(),JSON.parse(t)):blank()}catch(e){S=blank()}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{let t=null;if(APP){const x=appXhr("/api/state");if(x&&x.status===200&&x.responseText)t=x.responseText}t=t||localStorage.getItem(KEY);S=t?Object.assign(blank(),JSON.parse(t)):blank()}catch(e){S=blank()}}
+let appSaveT=null,appSaveBody=null;
+function appFlush(keep){if(!appSaveBody)return;const b=appSaveBody;appSaveBody=null;clearTimeout(appSaveT);appFetch("/api/state",{method:"POST",body:b,keepalive:!!keep&&b.length<60000}).catch(()=>{appSaveBody=appSaveBody||b})}
+function save(){const j=JSON.stringify(S);try{localStorage.setItem(KEY,j)}catch(e){}
+  // the app keeps the tracker in a file on this PC (with daily backups), out of reach of browser clean-ups
+  if(APP){appSaveBody=j;clearTimeout(appSaveT);appSaveT=setTimeout(()=>appFlush(false),400)}}
+addEventListener("pagehide",()=>appFlush(true));
 function uid(){return Math.random().toString(36).slice(2,10)}
 function cur(){return S.chars.find(c=>c.id===S.active)||null}
 function newChar(name,cls,level){const c={id:uid(),name,cls,level:+level||1,status:"alive",created:Date.now(),done:{normal:{},elite:{},ultimate:{}},bonus:0};S.chars.push(c);S.active=c.id;save();return c}
@@ -1657,7 +1690,7 @@ const Sync=(()=>{
   }
 
   async function start(handle){
-    dir=handle;files.clear();lastScan=0;buttons("live");status("Reading save folder…","live");
+    dir=handle;files.clear();report.clear();lastScan=0;buttons("live");status("Reading save folder…","live");
     await tick(true);clearInterval(timer);timer=setInterval(()=>tick(false),POLL_MS);
   }
   function stop(keepHandle){dir=null;clearInterval(timer);timer=null;files.clear();if(!keepHandle)saveHandle(null);buttons("off");status("Not connected.","")}
@@ -1709,7 +1742,7 @@ const Sync=(()=>{
     render();renderDetails();
   }
   async function forgetCopies(){const list=await copies();for(const c of list)await idb("readwrite",s=>s.delete("save:"+c.folder)).catch(()=>{});return list.length}
-  return{canLive,connect,reconnect,resume,stop:()=>stop(false),loadOnce,forgetCopies,get live(){return!!dir},refresh:()=>tick(true)};
+  return{canLive,connect,reconnect,resume,startWith:h=>start(h),stop:()=>stop(false),loadOnce,forgetCopies,get live(){return!!dir},refresh:()=>tick(true)};
 })();
 
 // explain read-only, local-only access before the browser's folder picker appears
@@ -1811,7 +1844,8 @@ const Game=(()=>{
       catch(e){status("Ready for this visit (your browser didn't have room to keep the files, so pick the folder again next time)","warn")}}
     catch(e){game=null;buttons("off");status("Couldn't read the game files: "+esc(e.message),"warn")}
   }
-  return{connect,reconnect,resume,stop,resolveChar,loadOnce,get ready(){return!!game}};
+  async function openWith(d){try{await open(d);return true}catch(e){game=null;buttons("off");status("Couldn't read the game files: "+esc(e.message),"warn");return false}}
+  return{connect,reconnect,resume,openWith,stop,resolveChar,loadOnce,get ready(){return!!game}};
 })();
 $("#gameConnect").onclick=()=>Game.connect();
 $("#gamePick").onclick=()=>{copyText($("#gamePath").textContent);$("#gameOnce").click()};
@@ -1890,6 +1924,7 @@ function openWizard(){$("#steamSteps").hidden=S.saveSource!=="steam";wizUpdate()
 $("#syncSetup").onclick=openWizard;
 $("#syncAll").onclick=()=>{
   if(Sync.live){Sync.refresh();toast("Synced");return}
+  if(APP){AppMode.start();return}
   // returning Steam Cloud player with gear data saved: one click straight to the saves picker
   if(S.saveSource==="steam"&&S.steamLive&&!$("#syncReconnect").hidden){Sync.reconnect();return}
   if(S.saveSource==="steam"&&!S.steamLive&&Game.ready){copyText(STEAM_PATH);$("#syncOnce").click();return}
@@ -1904,8 +1939,50 @@ $("#syncLayout").value=S.syncLayout||"";
 seedSample();
 setSyncMin(!!S.syncMin);
 route();
-Sync.resume();
-Game.resume();
+/* ---------- DESKTOP APP ----------
+   The app reads the folders itself and lends them to this page through a tiny local API that
+   looks like the browser's folder handles, so live sync and gear data work unchanged, including
+   Steam Cloud saves under Program Files. */
+const AppMode=(()=>{
+  const q=(root,p)=>`root=${root}&p=${encodeURIComponent(p)}`;
+  const file=(root,p,name)=>({kind:"file",name,async getFile(){const r=await appFetch(`/api/read?${q(root,p)}`);if(!r.ok)throw new Error(await r.text());
+    return new File([await r.blob()],name,{lastModified:+r.headers.get("X-Mtime")||Date.now()})}});
+  const dir=(root,p="",name)=>({kind:"directory",name:name||root,
+    async *entries(){const r=await appFetch(`/api/ls?${q(root,p)}`);if(!r.ok)throw new Error((await r.text()).trim());
+      for(const e of await r.json()){const sub=p?p+"/"+e.name:e.name;yield[e.name,e.dir?dir(root,sub,e.name):file(root,sub,e.name)]}},
+    async queryPermission(){return"granted"},async requestPermission(){return"granted"}});
+  async function info(){const r=await appFetch("/api/info");APP=await r.json();return APP}
+  function startSaves(){if(!APP.roots.length){$("#syncStatus").textContent="No Grim Dawn saves found on this PC yet. Play a character, then click Sync Grim Dawn.";$("#syncDot").className="dot warn";return}
+    Sync.startWith(dir("saves"))}
+  async function startGame(){if(!APP.game.found){$("#gameStatus").innerHTML="Grim Dawn install not found. Set the game folder in Sync options to see gear names.";$("#gameDot").className="dot warn";return}
+    await Game.openWith(dir("game"))}
+  function render_(){
+    const a=APP;$("#appVer").textContent="v"+a.version;
+    const act=a.roots.find(r=>r.id===a.active);
+    $("#appSaves").innerHTML=`<option value="">Automatic${act?` (now: ${esc(act.label)})`:""}</option>`+a.roots.map(r=>`<option value="${esc(r.id)}">${esc(r.label)} · ${r.count} file${r.count===1?"":"s"}</option>`).join("");
+    $("#appSaves").value=a.saveRoot||"";
+    $("#appSavePath").textContent=act?act.path:"No Grim Dawn save folder found.";
+    $("#appGamePath").textContent=a.game.found?a.game.path:"Not found. Paste your Grim Dawn folder below.";
+    $("#appAuto").checked=!!a.autostart;
+  }
+  async function start(){
+    $("#appPanel").hidden=false;$("#wzStep1").hidden=true;$("#wzStep2").hidden=true;
+    $("#bkNote").textContent="The app already saves your progress on this PC every day. Use this to move it to another PC or keep an extra copy.";
+    render_();startSaves();await startGame();
+  }
+  $("#appSaves").onchange=async e=>{await appFetch("/api/config",{method:"POST",body:JSON.stringify({saveRoot:e.target.value})});await info();render_();startSaves()};
+  $("#appGameSet").onclick=async()=>{const v=$("#appGameIn").value.trim();if(!v)return;
+    const r=await appFetch("/api/config",{method:"POST",body:JSON.stringify({gameDir:v})});
+    if(!r.ok){toast((await r.text()).trim());return}
+    APP=await r.json();$("#appGameIn").value="";render_();await startGame()};
+  $("#appGameAuto").onclick=async()=>{const r=await appFetch("/api/config",{method:"POST",body:JSON.stringify({gameDir:""})});APP=await r.json();render_();await startGame()};
+  $("#appAuto").onchange=async e=>{const r=await appFetch("/api/autostart",{method:"POST",body:JSON.stringify({on:e.target.checked})});
+    if(!r.ok){toast("Couldn't change that: "+(await r.text()).trim());e.target.checked=!e.target.checked;return}
+    toast(e.target.checked?"GrimTracker will open when Windows starts":"GrimTracker won't open with Windows")};
+  document.querySelectorAll("[data-appopen]").forEach(b=>b.onclick=()=>appFetch("/api/open?what="+b.dataset.appopen,{method:"POST"}));
+  return{start};
+})();
+if(APP)AppMode.start();else{Sync.resume();Game.resume()}
 </script>
 </body>
 </html>

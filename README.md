@@ -21,6 +21,22 @@ Open the site, then:
 
 Progress is stored in your browser. Use **Backup** to keep a copy.
 
+## Desktop app (Windows)
+
+Browsers can't read Steam Cloud saves live, because Steam keeps them under Program Files.
+The GrimTracker app gets around that: it runs the same site in its own window and reads the
+saves itself, so the tracker updates live while you play, wherever the saves are.
+
+- **Download:** https://quackkokaine.github.io/grimtracker/download/GrimTracker.exe. Run it once to install it for your user,
+  no admin needed. It adds Start menu and desktop shortcuts and an entry in Settings > Apps for removal.
+- **Read-only:** it only reads `player.gdc` files and the game's item database and text. It never changes saves.
+- **Your data:** progress and the Hall of the Fallen are kept in `%APPDATA%\GrimTracker` with a dated backup each day.
+- **Always current:** it downloads the latest version of this site when it starts, with a built-in copy for offline use.
+- **Window:** it opens in Microsoft Edge (or Chrome) app mode with its own profile, so clearing your browser's data doesn't affect it.
+- The exe isn't code-signed yet, so Windows SmartScreen may warn the first time: choose **More info > Run anyway**.
+
+Source is in `app/` (Go, standard library only). Build with `app/build.sh` after `python3 build.py`.
+
 ## Development
 
 The page is a single `index.html` built from `src/`:
