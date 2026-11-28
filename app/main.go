@@ -42,7 +42,7 @@ const (
 )
 
 // Version of the app; build.sh publishes it in download/version.json for self-updates.
-var Version = "1.2.1"
+var Version = "1.3.0"
 
 // where the site and app updates come from (GT_SITE overrides it for testing)
 var SiteURL = func() string {
@@ -421,6 +421,7 @@ func routes() http.Handler {
 	mux.HandleFunc("/api/autostart", apiAutostart)
 	mux.HandleFunc("/api/open", apiOpen)
 	mux.HandleFunc("/api/update", apiUpdate)
+	mux.HandleFunc("/api/gt", apiGrimtools)
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
 	mux.HandleFunc("/api/quit", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -568,7 +569,7 @@ func apiLs(w http.ResponseWriter, r *http.Request) {
 }
 
 // files the website is allowed to read: character saves, item databases, English text
-var readable = regexp.MustCompile(`(?i)(\.gdc|\.arz|(^|[\\/])text_en\.arc)$`)
+var readable = regexp.MustCompile(`(?i)(\.gdc|\.fow|\.arz|(^|[\\/])text_en\.arc|(^|[\\/])levels\.arc)$`)
 
 func apiRead(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
@@ -591,8 +592,9 @@ func apiRead(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("X-Mtime", fmt.Sprint(st.ModTime().UnixMilli()))
-	w.Header().Set("Content-Length", fmt.Sprint(st.Size()))
-	io.Copy(w, f)
+	w.Header().Set("X-Size", fmt.Sprint(st.Size()))
+	// Range requests let the page read just the start of the huge Levels.arc
+	http.ServeContent(w, r, "", time.Time{}, f)
 }
 
 // The tracker's data (progress, Hall of the Fallen) is kept as a file so clearing browser
@@ -917,4 +919,56 @@ func installUpdate(exe string) string {
 		return ""
 	}
 	return info.Version
+}
+
+/* ---------- Grimtools map data for Live Play ---------- */
+
+// Live Play lists what's in each area (chests, bosses, lore, passages...) using the data behind
+// the Grimtools world map. Browsers can't fetch it from another site, so the app does, and keeps
+// a copy for a week.
+var gtFiles = map[string]string{
+	"data": "https://www.grimtools.com/map/js/data.js",
+	"en":   "https://www.grimtools.com/map/js/l10n/en.js",
+}
+var gtMu sync.Mutex
+
+func apiGrimtools(w http.ResponseWriter, r *http.Request) {
+	f := r.URL.Query().Get("f")
+	src, ok := gtFiles[f]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	gtMu.Lock()
+	defer gtMu.Unlock()
+	dir := filepath.Join(dataDir, "grimtools")
+	os.MkdirAll(dir, 0o755)
+	name := filepath.Join(dir, f+".js")
+	st, err := os.Stat(name)
+	fresh := err == nil && time.Since(st.ModTime()) < 7*24*time.Hour && r.URL.Query().Get("refresh") == ""
+	if !fresh {
+		req, _ := http.NewRequest("GET", src, nil)
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) GrimTracker/"+Version)
+		req.Header.Set("Referer", "https://www.grimtools.com/map/")
+		cl := &http.Client{Timeout: 30 * time.Second}
+		resp, err := cl.Do(req)
+		if err == nil {
+			b, rerr := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
+			resp.Body.Close()
+			if rerr == nil && resp.StatusCode == 200 && len(b) > 10000 && !bytes.Contains(b[:min(len(b), 2000)], []byte("<html")) {
+				writeAtomic(name, b)
+			} else {
+				logger.Printf("grimtools %s: HTTP %d", f, resp.StatusCode)
+			}
+		} else {
+			logger.Printf("grimtools %s: %v", f, err)
+		}
+	}
+	b, err := os.ReadFile(name)
+	if err != nil {
+		http.Error(w, "Couldn't get the Grimtools map data. Check your internet connection.", http.StatusBadGateway)
+		return
+	}
+	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	w.Write(b)
 }

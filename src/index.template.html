@@ -203,6 +203,36 @@ body.synced #newChar,body.synced #editChar,body.synced #backupBtn{display:none}
 .app .charbar,.app #backLink{margin-left:auto}
 .appreload.spin svg{animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.applive{display:none;margin-left:8px}
+.app .applive{display:inline-flex}
+.livewin .applive,.livewin #charbar,.livewin #hallLink,.livewin #backLink{display:none!important}
+.livewin footer{display:none}
+.livewin header .tagline,.livewin header .sub{display:none}
+.livewin header img{height:44px;width:auto}
+.livewin header{padding-top:8px;padding-bottom:8px}
+#liveView{max-width:none;padding:0 22px 18px}
+.lphead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 4px}
+.lplabel{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);font-weight:700}
+.lphead h2{font-family:Cinzel;font-size:30px;margin:2px 0 0;color:#f1ece4}
+.lpsub{color:var(--muted);font-size:14px}
+.lpctl{display:flex;gap:8px;align-items:center}
+.lpctl select{background:#151618;border:1px solid var(--line);color:var(--bone);border-radius:6px;padding:7px 9px;font:inherit;font-size:14px;max-width:340px}
+.lpstatus{margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+.lpgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr);gap:16px;align-items:start}
+.lpmapwrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0d0e10}
+.lpmapwrap iframe{display:block;width:100%;height:calc(100vh - 230px);min-height:420px;border:0}
+.lplist{max-height:calc(100vh - 230px);min-height:420px;overflow:auto;padding-right:4px}
+.lpg{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,.02)}
+.lpg summary{cursor:pointer;padding:8px 12px;font-family:Cinzel;font-weight:700;font-size:15px;color:#efe8dd;display:flex;justify-content:space-between}
+.lpg summary span{font-family:"Alegreya Sans";color:var(--muted);font-weight:600}
+.lpg ul{list-style:none;margin:0;padding:0 6px 6px}
+.lpg li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:14.5px}
+.lpg li:hover{background:rgba(200,100,42,.12)}
+.lpn{flex:1;min-width:140px;color:var(--bone)}.lpn i{color:var(--muted);font-style:normal;font-size:13px}
+.lpk{color:var(--muted);font-size:12.5px}
+.lpok{color:#7fc46a;font-size:12.5px}.lpno{color:#d98a52;font-size:12.5px}
+.lpcredit{margin-top:10px;font-size:12.5px}
+@media (max-width:900px){.lpgrid{grid-template-columns:1fr}.lpmapwrap iframe{height:55vh}.lplist{max-height:none}}
 .cavenote{margin-top:10px;padding:8px 11px;border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:6px;background:rgba(255,255,255,.03);font-size:14px;color:var(--bone)}
 .cavenote a{white-space:nowrap}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -367,6 +397,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
       <a class="btn red" id="hallLink" href="#fallen">† Hall of the Fallen <span class="hc" id="hallCount"></span></a>
       <button class="btn ghost" id="backupBtn">Backup</button>
     </div>
+    <button class="btn ghost applive" id="liveBtn" title="Open Live Play in its own window, e.g. on a second monitor">▶ Live Play</button>
     <button class="btn ghost appreload" id="appReload" title="Reload GrimTracker and check for updates" aria-label="Reload and check for updates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
   </div>
 </header>
@@ -466,6 +497,19 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-
 
     </aside>
   </div>
+</main>
+
+<main id="liveView" hidden>
+  <section class="lphead">
+    <div><div class="lplabel">Live Play</div><h2 id="lpArea">Loading…</h2><div class="lpsub" id="lpSub"></div></div>
+    <div class="lpctl"><select id="lpPick" aria-label="Choose an area"></select><button type="button" class="btn sm" id="lpAuto" hidden>Follow my character</button></div>
+  </section>
+  <p class="note lpstatus" id="lpStatus"></p>
+  <section class="lpgrid">
+    <div class="lpmapwrap"><iframe id="lpMap" title="Grimtools map of this area" loading="lazy" referrerpolicy="no-referrer"></iframe></div>
+    <div class="lplist" id="lpList"></div>
+  </section>
+  <p class="note lpcredit">Map and area data: <a href="https://www.grimtools.com/map/" target="_blank" rel="noopener">Grimtools</a>. Your location comes from the map your character has explored, which Grim Dawn saves as you play, so it can trail you by up to a minute or so.</p>
 </main>
 
 <main id="fallenView" hidden>
@@ -888,7 +932,10 @@ function editEpitaph(id){
   inp.onblur=()=>done(true);
 }
 function route(){
-  const fallen=location.hash==="#fallen";
+  const fallen=location.hash==="#fallen",live=location.hash==="#live";
+  $("#liveView").hidden=!live;
+  if(live){$("#trackerView").hidden=true;$("#fallenView").hidden=true;$("#charbar").hidden=true;$("#hallLink").hidden=true;$("#backLink").hidden=true;
+    document.title="Live Play · GrimTracker";if(APP)setTimeout(()=>LivePlay.start());return}
   $("#trackerView").hidden=fallen;$("#fallenView").hidden=!fallen;
   $("#charbar").hidden=fallen;$("#hallLink").hidden=fallen;$("#backLink").hidden=!fallen;
   document.title=fallen?"Hall of the Fallen · GrimTracker":"GrimTracker · Grim Dawn character and shrine tracker";
@@ -1446,7 +1493,192 @@ const AppMode=(()=>{
     location.reload()};
   return{start};
 })();
-if(APP)AppMode.start();else{Sync.resume();Game.resume()}
+/* ---------- LIVE PLAY ----------
+   A second-screen guide to the area you're playing in. Grim Dawn saves each character's
+   explored map (fog of war, map.fow) as you play. When new ground gets uncovered, those cells
+   tell us where you are; the game's own level table (Levels.arc) places them on the world, and
+   the Grimtools map data says which area that is and what's in it. Desktop app only. */
+const LivePlay=(()=>{
+  const HUBS=/^devil'?s crossing$/i;          // towns you only pop into: keep showing the last area
+  const DIFFS=["Normal","Elite","Ultimate"];
+  let GT=null,LV=null,started=false,timer=null,scanT=0,lastData=0;
+  const st=(()=>{try{return JSON.parse(localStorage.getItem("gt-live")||"{}")}catch(e){return{}}})();
+  st.auto=st.auto!==false;
+  const keep=()=>{try{localStorage.setItem("gt-live",JSON.stringify({area:st.area,lastAuto:st.lastAuto,auto:st.auto,char:st.char,pin:st.pin}))}catch(e){}};
+  const prevFow={};   // char|difficulty -> {front, cells: Map(file -> Uint8Array)}
+
+  /* Grimtools map data, fetched by the app */
+  async function loadGT(){
+    const get=async f=>{const r=await appFetch("/api/gt?f="+f);if(!r.ok)throw new Error((await r.text()).trim());return r.text()};
+    const [d,e]=await Promise.all([get("data"),get("en")]);
+    const W={};new Function("window",d)(W);const L={};new Function("m_l10n_texts",e)(L);const T=L.en||{};
+    const nm=t=>(T[t]||t||"").replace(/\s+$/,"");
+    const maps={};for(const [id,m] of Object.entries(W.maps))maps[id]={id,name:nm(m.names[0]),x:m.x,y:m.y,w:m.sizeX,h:m.sizeY};
+    const areas={},byMap={};
+    for(const [id,a] of Object.entries(W.mapAreas)){const sh=W.mapAreaShapes&&W.mapAreaShapes[id];
+      const x={id,map:a.mapId,name:nm(a.tag),x:a.x,y:a.y,size:a.size,poly:(sh&&sh.polygon)||[],objs:[],caves:[]};areas[id]=x;(byMap[a.mapId]=byMap[a.mapId]||[]).push(x)}
+    const KEEP={shrines:"shrine",superBosses:"superboss",bosses:"boss",bounties:"bounty",levers:"lever",oneshotChests:"oneshot",lockedChests:"locked",
+      chests:"chest",troves:"trove",roguelikeChests:"roguelike",loreNotes:"lore",rifts:"rift",totems:"totem",rogueDungeons:"dungeon",merchants:"npc",
+      smiths:"npc",smugglers:"npc",spiritGuides:"npc",inventors:"npc",illusionists:"npc",ascensionAltars:"npc",cauldrons:"npc",repairSites:"npc",detonationSites:"npc"};
+    for(const [k,ty] of Object.entries(KEEP))for(const [oid,o] of Object.entries(W.mapObjects[k]||{})){const a=areas[o.mapAreaId];if(!a)continue;
+      a.objs.push({t:ty,id:oid,n:nm(o.tag),k:o.type||"",d:o.difficulty&&o.difficulty.length<3?o.difficulty:null,prof:o.professionTag?nm(o.professionTag):""})}
+    const TR=W.mapTransitions||{};
+    for(const [tid,t] of Object.entries(TR)){const a=polyArea(byMap[t.mapId],t.x,t.y);if(!a)continue;
+      if(t.initiallyHidden)a.objs.push({t:"secret",id:tid,n:nm(t.tag)||"Hidden passage"});
+      for(const d of t.to||[]){const m=TR[d]&&TR[d].mapId;if(m&&m!==t.mapId&&maps[m]&&!a.caves.find(c=>c.map===m))a.caves.push({map:m,id:tid,n:maps[m].name,hidden:!!t.initiallyHidden})}}
+    GT={maps,areas,byMap};
+  }
+  const inPoly=(poly,x,y)=>{let c=false;for(const ring of poly)for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [xi,yi]=ring[i],[xj,yj]=ring[j];
+    if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
+  const polyArea=(list,x,y)=>(list||[]).find(a=>a.poly.length&&inPoly(a.poly,x,y))||null;
+  // a point in Grimtools' global pixel frame -> area (overworld first, then cave and dungeon maps)
+  function areaAt(gx,gy){
+    const w=GT.maps.a79;let a=w&&polyArea(GT.byMap.a79,gx-w.x,gy-w.y);if(a)return a;
+    for(const m of Object.values(GT.maps)){if(m.id==="a79"||gx<m.x||gx>=m.x+m.w||gy<m.y||gy>=m.y+m.h)continue;a=polyArea(GT.byMap[m.id],gx-m.x,gy-m.y);if(a)return a}
+    return null}
+  // level grid -> Grimtools pixels (fitted to the devotion shrines; fog cells cover 64 units, flipped in x)
+  const toGlobal=(x,z)=>[1.40478439*x-1.38576947*z+15061.585+3930,1.42308466*x+1.40413672*z+21209.595-2034];
+  const cellPoint=(lv,i)=>{const r=Math.floor(i/18),c=i%18;return toGlobal(lv[0]+((1-(c+.5)/18)-.5)*64,lv[1]+((r+.5)/18-.5)*64)};
+
+  /* the game's level table, read from the start of the newest Levels.arc */
+  async function loadLevels(){
+    const cands=["gdx3/resources","gdx2/resources","gdx1/resources","resources"];
+    for(const dirp of cands){
+      const r=await appFetch(`/api/ls?root=game&p=${encodeURIComponent(dirp)}`);if(!r.ok)continue;
+      const f=(await r.json()).find(e=>/^levels\.arc$/i.test(e.name));if(!f)continue;
+      const p=dirp+"/"+f.name,sig=p+":"+f.size;
+      try{const c=JSON.parse(localStorage.getItem("gt-levels-v1")||"null");if(c&&c.sig===sig){LV=c.lv;return}}catch(e){}
+      const file={name:f.name,size:f.size,slice:(a,b)=>({arrayBuffer:async()=>{const x=await appFetch(`/api/read?root=game&p=${encodeURIComponent(p)}`,{headers:{Range:`bytes=${a}-${b-1}`}});
+        if(!x.ok&&x.status!==206)throw new Error("couldn't read "+p);return x.arrayBuffer()}})};
+      const arc=await GDDB.openArc(file),e=arc.entries.find(e=>/(^|\/)world001\.map$/i.test(e.name));if(!e)continue;
+      let buf=new Uint8Array(0),parts=0;
+      const need=async n=>{while(buf.length<n){if(parts>=e.parts)throw new Error("world map ended early");const p2=await arc.readPart(e,parts++);const nb=new Uint8Array(buf.length+p2.length);nb.set(buf);nb.set(p2,buf.length);buf=nb}};
+      await need(8);let o=8,sec=null;
+      for(let k=0;k<20&&!sec;k++){await need(o+8);const dv=new DataView(buf.buffer);const t=dv.getUint32(o,true),sz=dv.getUint32(o+8-4,true);
+        if(t===1){await need(o+8+sz);sec=buf.subarray(o+8,o+8+sz)}else o+=8+sz}
+      if(!sec)throw new Error("no level table in the world map");
+      const dv=new DataView(sec.buffer,sec.byteOffset,sec.byteLength),td=new TextDecoder();let q=0;
+      const str=()=>{const l=dv.getUint32(q,true);q+=4;const v=td.decode(sec.subarray(q,q+l));q+=l;return v};
+      const n=dv.getUint32(q,true);q+=4;LV={};
+      for(let i=0;i<n;i++){const x=dv.getInt32(q+24,true),z=dv.getInt32(q+32,true);q+=36+16;str();str();q+=4;const file=str().toLowerCase();q+=8;LV[file]=[x,z]}
+      try{localStorage.setItem("gt-levels-v1",JSON.stringify({sig,lv:LV}))}catch(e){}
+      return;
+    }
+    throw new Error("Grim Dawn's level files weren't found. Check the game folder in Sync options.");
+  }
+
+  /* fog of war */
+  // map.fow's LZ4 stream stops a few bytes short of its stated size, so decode leniently
+  function lz4loose(src,n){const out=new Uint8Array(n);let ip=0,op=0;
+    while(ip<src.length&&op<n){const t=src[ip++];let l=t>>4;if(l===15){let b;do{b=src[ip++];l+=b}while(b===255&&ip<src.length)}
+      l=Math.min(l,src.length-ip,n-op);out.set(src.subarray(ip,ip+l),op);ip+=l;op+=l;if(ip>=src.length)break;
+      const off=src[ip]|src[ip+1]<<8;ip+=2;let m=t&15;if(m===15){let b;do{b=src[ip++];m+=b}while(b===255&&ip<src.length)}m+=4;
+      if(!off||off>op)break;for(let k=0;k<m&&op<n;k++,op++)out[op]=out[op-off]}
+    return out.subarray(0,op)}
+  function parseFow(u8){
+    const n=new DataView(u8.buffer,u8.byteOffset,u8.byteLength).getUint32(0,true);
+    const u=lz4loose(u8.subarray(4),n),v=new DataView(u.buffer,u.byteOffset,u.byteLength),td=new TextDecoder();
+    let o=8;const cnt=v.getUint32(o,true);o+=4;const out=[];
+    for(let i=0;i<cnt&&o<u.length;i++){const nl=v.getUint32(o,true);o+=4;const file=td.decode(u.subarray(o,o+nl)).toLowerCase();o+=nl;
+      const dl=v.getUint32(o,true);o+=4;const nn=dl>=16?v.getUint32(o+8,true):0;
+      out.push({file,cells:dl>=16+nn&&nn?u.slice(o+16,o+16+nn):null});o+=dl}
+    return out}
+  // where is the character? newly uncovered cells, else the region the game loaded last
+  function locate(key,regions){
+    const prev=prevFow[key],now=new Map(regions.map(r=>[r.file,r.cells]));
+    const votes={};let samples=0;
+    const vote=(file,i)=>{const lv=LV[file];if(!lv)return;const [gx,gy]=cellPoint(lv,i);const a=areaAt(gx,gy);if(a){votes[a.id]=(votes[a.id]||0)+1;samples++}};
+    if(prev){
+      for(const r of regions){if(!r.cells)continue;const p=prev.cells.get(r.file);for(let i=0;i<r.cells.length;i++)if(r.cells[i]>0&&(!p||r.cells[i]>p[i]))vote(r.file,i)}
+      if(!samples&&regions[0]&&regions[0].file!==prev.front){const r=regions[0];if(r.cells)for(let i=0;i<r.cells.length;i++)if(r.cells[i]>0)vote(r.file,i)}
+    }else if(regions[0]&&regions[0].cells){const r=regions[0];for(let i=0;i<r.cells.length;i++)if(r.cells[i]>0)vote(r.file,i)}
+    prevFow[key]={front:regions[0]&&regions[0].file,cells:now};
+    const best=Object.entries(votes).sort((a,b)=>b[1]-a[1])[0];
+    return best?GT.areas[best[0]]:null}
+
+  /* which character is being played: the one whose fog file changed last */
+  let watch=[];  // {char, diff, path, mtime}
+  async function scanChars(){
+    const out=[];
+    for(const c of S.chars.filter(c=>c.link&&!/#fallen-/.test(c.link))){
+      const base=c.link.replace(/\\/g,"/")+"/levels_world001.map";
+      const r=await appFetch(`/api/ls?root=saves&p=${encodeURIComponent(base)}`);if(!r.ok)continue;
+      for(const d of await r.json()){if(!d.dir||!DIFFS.includes(d.name))continue;
+        const r2=await appFetch(`/api/ls?root=saves&p=${encodeURIComponent(base+"/"+d.name)}`);if(!r2.ok)continue;
+        const f=(await r2.json()).find(e=>e.name.toLowerCase()==="map.fow");if(f)out.push({char:c,diff:d.name,path:base+"/"+d.name+"/map.fow",mtime:f.mtime})}}
+    watch=out}
+  function pickWatch(){const list=st.pin?watch.filter(w=>w.char.id===st.char):watch;return list.sort((a,b)=>b.mtime-a.mtime)[0]||null}
+  async function tick(){
+    try{
+      if(Date.now()-scanT>30000){scanT=Date.now();try{const x=appXhr("/api/state");if(x&&x.status===200)Object.assign(S,JSON.parse(x.responseText))}catch(e){}await scanChars()}
+      const w=pickWatch();if(!w){status("Waiting for a synced character with explored map data…");return}
+      const dir=w.path.replace(/\/map\.fow$/,"");
+      const r=await appFetch(`/api/ls?root=saves&p=${encodeURIComponent(dir)}`);const f=r.ok&&(await r.json()).find(e=>e.name.toLowerCase()==="map.fow");
+      const key=w.char.id+"|"+w.diff;
+      if(f&&(f.mtime!==w.lastRead||!prevFow[key])){w.mtime=f.mtime;
+        const b=await appFetch(`/api/read?root=saves&p=${encodeURIComponent(w.path)}`);if(b.ok){
+          const a=locate(key,parseFow(new Uint8Array(await b.arrayBuffer())));w.lastRead=f.mtime;lastData=f.mtime;
+          if(a&&!HUBS.test(a.name)){st.lastAuto=a.id;if(st.auto&&a.id!==st.area){st.area=a.id;keep();draw()}else keep()}}}
+      st.following={name:w.char.name,diff:w.diff,id:w.char.id};drawStatus();
+    }catch(e){status("Live Play hit a snag: "+esc(e.message))}
+  }
+
+  /* screen */
+  const NUM=id=>String(id).replace(/^\D+/,"");
+  const GTMAP="https://www.grimtools.com/map/";
+  const GROUPS=[["shrine","Devotion shrines"],["superboss","Superbosses"],["boss","Bosses & heroes"],["bounty","Bounty targets"],["secret","Secret passages"],
+    ["lever","Levers & switches"],["oneshot","One-time chests"],["locked","Locked chests"],["chest","Chests"],["trove","Treasure troves"],
+    ["roguelike","Shattered chests"],["lore","Lore notes"],["rift","Rifts"],["totem","Monster totems"],["dungeon","Roguelike dungeons"],["npc","Merchants & services"]];
+  const OPEN=new Set(["shrine","superboss","boss","secret","oneshot","lore","locked"]);
+  function status(t){const e=$("#lpStatus");if(e)e.innerHTML=t}
+  function drawStatus(){const f=st.following;if(!f)return;const ago=lastData?Math.max(0,Math.round((Date.now()-lastData)/1000)):null;
+    status(`<span class="dot ok"></span>Following <b>${esc(f.name)}</b> · ${esc(f.diff)}${ago!=null?` · map saved ${ago<90?ago+"s":Math.round(ago/60)+" min"} ago`:""}${st.auto?"":" · <b>pinned</b>"}`)}
+  function rowsFor(a){
+    const c=S.chars.find(x=>st.following&&x.id===st.following.id),dk=st.following?st.following.diff.toLowerCase():"normal";
+    const done=c&&c.done&&c.done[dk]||{};
+    const by={};for(const o of a.objs)(by[o.t]=by[o.t]||[]).push(o);
+    let h="";
+    for(const [t,label] of GROUPS){const list=by[t];if(!list||!list.length)continue;
+      const grouped=[];const seen={};for(const o of list){const key=o.n+"|"+o.k+"|"+o.prof;if(seen[key]&&t!=="shrine"){seen[key].n2++;continue}const g={...o,n2:1};seen[key]=g;grouped.push(g)}
+      h+=`<details class="lpg"${OPEN.has(t)?" open":""}><summary>${label} <span>${list.length}</span></summary><ul>`+grouped.map(o=>{
+        let tag=o.t==="boss"||o.t==="bounty"?o.k:o.t==="chest"?o.k:o.t==="npc"?o.prof:"";if(o.d)tag+=(tag?" · ":"")+o.d.map(x=>["","Normal","Elite","Ultimate"][x]).join("/")+" only";
+        const sh=o.t==="shrine"?(done[NUM(o.id)]?'<b class="lpok">✓ restored</b>':'<b class="lpno">not yet</b>'):"";
+        return `<li data-lpobj="${esc(o.id)}"><span class="lpn">${esc(o.n)}${o.n2>1?` <i>×${o.n2}</i>`:""}</span>${tag?`<span class="lpk">${esc(tag)}</span>`:""}${sh}</li>`}).join("")+"</ul></details>"}
+    if(a.caves.length)h+=`<details class="lpg" open><summary>Caves & dungeons here <span>${a.caves.length}</span></summary><ul>`+a.caves.map(cv=>{
+      const inner=(GT.byMap[cv.map]||[]).flatMap(x=>x.objs);const n=t=>inner.filter(o=>o.t===t).length;
+      const bits=[["shrine","shrine"],["boss","boss"],["superboss","superboss"],["oneshot","one-time chest"],["lore","lore note"]].map(([t,w])=>{const k=n(t);return k?k+" "+w+(k>1?"s":""):""}).filter(Boolean).join(", ");
+      return `<li data-lpobj="${esc(cv.id)}"><span class="lpn">${esc(cv.n)}${cv.hidden?' <i>hidden</i>':""}</span>${bits?`<span class="lpk">${bits}</span>`:""}<button type="button" class="btn sm ghost" data-lpgo="${esc(cv.map)}">Show</button></li>`}).join("")+"</ul></details>";
+    return h||'<p class="note">Nothing listed for this area.</p>'}
+  function draw(){
+    const a=GT&&st.area&&GT.areas[st.area];
+    $("#lpArea").textContent=a?a.name:"Waiting for your character to move…";
+    $("#lpSub").textContent=a?(a.map==="a79"?"":GT.maps[a.map].name):"";
+    $("#lpAuto").hidden=st.auto;$("#lpPick").value=st.area||"";
+    if(!a){$("#lpList").innerHTML='<p class="note">Play a character and Live Play picks up the area you\'re in. You can also choose an area above.</p>';return}
+    const src=GTMAP+"areas/"+NUM(a.id);if($("#lpMap").dataset.src!==src){$("#lpMap").dataset.src=src;$("#lpMap").src=src}
+    $("#lpList").innerHTML=rowsFor(a)}
+  function fillPicker(){
+    const ow=GT.byMap.a79.slice().sort((p,q)=>p.name.localeCompare(q.name));
+    const caves=Object.values(GT.areas).filter(a=>a.map!=="a79").sort((p,q)=>(GT.maps[p.map].name+p.name).localeCompare(GT.maps[q.map].name+q.name));
+    $("#lpPick").innerHTML=`<option value="">Choose an area…</option><optgroup label="Overworld">${ow.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("")}</optgroup>`+
+      `<optgroup label="Caves & dungeons">${caves.map(a=>`<option value="${a.id}">${esc(GT.maps[a.map].name===a.name?a.name:GT.maps[a.map].name+" – "+a.name)}</option>`).join("")}</optgroup>`}
+  async function start(){
+    if(started)return;started=true;
+    status("Loading map data…");
+    try{await loadGT();fillPicker();draw();status("Reading the game's world map…");await loadLevels();status("Looking for your character…")}
+    catch(e){status("Live Play couldn't start: "+esc(e.message));return}
+    tick();timer=setInterval(tick,4000);setInterval(drawStatus,5000);
+  }
+  $("#lpPick").onchange=e=>{if(!e.target.value)return;st.area=e.target.value;st.auto=false;keep();draw();drawStatus()};
+  $("#lpAuto").onclick=()=>{st.auto=true;if(st.lastAuto)st.area=st.lastAuto;keep();draw();drawStatus()};
+  $("#lpList").onclick=e=>{const g=e.target.closest("[data-lpgo]");if(g){const m=GT.byMap[g.dataset.lpgo];const a=m&&m.sort((p,q)=>q.size-p.size)[0];if(a){st.area=a.id;st.auto=false;keep();draw();drawStatus()}return}
+    const li=e.target.closest("[data-lpobj]");if(li){$("#lpMap").src=GTMAP+"objects/"+NUM(li.dataset.lpobj);$("#lpMap").dataset.src=""}};
+  return{start};
+})();
+const LIVEWIN=location.hash==="#live";
+if(LIVEWIN){document.documentElement.classList.add("livewin");if(APP)LivePlay.start()}
+else if(APP)AppMode.start();else{Sync.resume();Game.resume()}
+$("#liveBtn").onclick=()=>{const w=window.open(location.pathname+"#live","gtlive","popup=yes,width=1280,height=960");if(w)w.focus();else location.hash="live"};
 </script>
 </body>
 </html>

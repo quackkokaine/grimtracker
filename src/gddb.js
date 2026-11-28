@@ -92,7 +92,14 @@ const GDDB = (() => {
       const out = new Uint8Array(total); let o = 0; chunks.forEach(c => { out.set(c, o); o += c.length; });
       return out;
     }
-    return { name: file.name, entries, read };
+    // one compressed part of an entry (parts are ~256 KB), so a huge file can be read from the start
+    async function readPart(e, i) {
+      const pb = (e.firstPart + i) * 12;
+      const off = tv.getInt32(pb, true), cs = tv.getInt32(pb + 4, true), ds = tv.getInt32(pb + 8, true);
+      const raw = await slice(file, off, cs);
+      return cs === ds ? raw : lz4(raw, ds);
+    }
+    return { name: file.name, entries, read, readPart };
   }
 
   function decodeText(u8) {
