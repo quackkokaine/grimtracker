@@ -1543,11 +1543,12 @@ const LivePlay=(()=>{
   /* the game's level table, read from the start of the newest Levels.arc */
   async function loadLevels(){
     const cands=["gdx3/resources","gdx2/resources","gdx1/resources","resources"];
-    for(const dirp of cands){
+    let lastErr=null;
+    for(const dirp of cands)try{
       const r=await appFetch(`/api/ls?root=game&p=${encodeURIComponent(dirp)}`);if(!r.ok)continue;
       const f=(await r.json()).find(e=>/^levels\.arc$/i.test(e.name));if(!f)continue;
       const p=dirp+"/"+f.name,sig=p+":"+f.size;
-      try{const c=JSON.parse(localStorage.getItem("gt-levels-v1")||"null");if(c&&c.sig===sig){LV=c.lv;return}}catch(e){}
+      try{const c=JSON.parse(localStorage.getItem("gt-levels-v2")||"null");if(c&&c.sig===sig){LV=c.lv;return}}catch(e){}
       const file={name:f.name,size:f.size,slice:(a,b)=>({arrayBuffer:async()=>{const x=await appFetch(`/api/read?root=game&p=${encodeURIComponent(p)}`,{headers:{Range:`bytes=${a}-${b-1}`}});
         if(!x.ok&&x.status!==206)throw new Error("couldn't read "+p);return x.arrayBuffer()}})};
       const arc=await GDDB.openArc(file),e=arc.entries.find(e=>/(^|\/)world001\.map$/i.test(e.name));if(!e)continue;
@@ -1560,11 +1561,13 @@ const LivePlay=(()=>{
       const dv=new DataView(sec.buffer,sec.byteOffset,sec.byteLength),td=new TextDecoder();let q=0;
       const str=()=>{const l=dv.getUint32(q,true);q+=4;const v=td.decode(sec.subarray(q,q+l));q+=l;return v};
       const n=dv.getUint32(q,true);q+=4;LV={};
-      for(let i=0;i<n;i++){const x=dv.getInt32(q+24,true),z=dv.getInt32(q+32,true);q+=36+16;str();str();q+=4;const file=str().toLowerCase();q+=8;LV[file]=[x,z]}
-      try{localStorage.setItem("gt-levels-v1",JSON.stringify({sig,lv:LV}))}catch(e){}
+      // each level: bounds, position, id, rift-map record, shrine record, sky record, file name, data offset
+      for(let i=0;i<n;i++){const x=dv.getInt32(q+24,true),z=dv.getInt32(q+32,true);q+=36+16;str();str();str();const file=str().toLowerCase();q+=8;LV[file]=[x,z]}
+      if(!LV["levels/region0a001.lvl"])throw new Error("the world map in "+p+" looks different than expected");
+      try{localStorage.setItem("gt-levels-v2",JSON.stringify({sig,lv:LV}))}catch(e){}
       return;
-    }
-    throw new Error("Grim Dawn's level files weren't found. Check the game folder in Sync options.");
+    }catch(e){lastErr=e;LV=null}  // a newer expansion's file we can't read: fall back to the next one
+    throw new Error(lastErr?"couldn't read the game's world map ("+lastErr.message+")":"Grim Dawn's level files weren't found. Check the game folder in Sync options.");
   }
 
   /* fog of war */
